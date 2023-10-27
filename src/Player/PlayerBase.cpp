@@ -69,7 +69,7 @@ PlayerBase::Ptr PlayerBase::createPlayer(const EventPoller::Ptr &in_poller, cons
 
 PlayerBase::PlayerBase() {
     this->mINI::operator[](Client::kTimeoutMS) = 10000;
-    this->mINI::operator[](Client::kMediaTimeoutMS) = 10000;    //zlm 2023-10-26
+    this->mINI::operator[](Client::kMediaTimeoutMS) = 10000;    //zlm 2023-10-26 
     this->mINI::operator[](Client::kBeatIntervalMS) = 5000;
     this->mINI::operator[](Client::kWaitTrackReady) = true;
 }
