@@ -35,6 +35,7 @@
 #include "Thread/WorkThreadPool.h"
 #include "Rtp/RtpSelector.h"
 #include "FFmpegSource.h"
+#include "MultiMp4Publish.h"
 #if defined(ENABLE_RTPPROXY)
 #include "Rtp/RtpServer.h"
 #endif
@@ -1641,22 +1642,27 @@ void installWebApi() {
         });
     });
 
-    api_regist("/index/api/stopMultiFilePusher",[](API_ARGS_MAP_ASYNC){
+    api_regist("/index/api/startMultiMp4Publish",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
-        CHECK_ARGS("vhost","app","stream", "schema")
-        std::string schema = allArgs["schema"];
-        std::string vhost =  allArgs["vhost"];
-        std::string stream =  allArgs["stream"];
-        std::string app =  allArgs["app"];
-        std::string url =  allArgs["url"];
+        CHECK_ARGS("callId", "startTime", "endTime", "speed", "app", "stream", "remoteAddress");
+        auto callid = allArgs["callId"];
+        auto startTime = allArgs["startTime"];
+        auto endTime = allArgs["endTime"];
+        auto speed = allArgs["speed"];
+        auto app = allArgs["app"];
+        auto stream = allArgs["stream"];
+        auto remoteAddress = allArgs["remoteAddress"];
 
-        auto key = getPusherKey(schema, vhost, app, stream, url);
-        auto src = MediaSource::find(schema, vhost, app, stream);
-        if (!src) {
-            throw ApiRetException("can not find the stream", API::NotFound);
-        }
-        src->close(true); //这里不光要停止MediaSource，还需要停止pusher;pusher可通过getPusherKey函数获取key去获得，这里暂时没加
-        val["message"] = "停止成功";
+        MultiMp4Publish::GetCreate()->Publish(callid, startTime, endTime, speed, app, stream, remoteAddress);
+
+        invoker(200, headerOut, val.toStyledString());
+    });
+
+    api_regist("/index/api/stopMultiMp4Publish",[](API_ARGS_MAP_ASYNC){
+        CHECK_SECRET();
+        CHECK_ARGS("callId")
+        std::string callid = allArgs["callId"];
+        MultiMp4Publish::GetCreate()->Stop(callid);
         invoker(200, headerOut, val.toStyledString());
     });
 

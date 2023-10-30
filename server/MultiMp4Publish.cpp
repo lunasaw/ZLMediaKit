@@ -23,7 +23,8 @@ int MultiMp4Publish::Publish(std::string callId, std::string startTime, std::str
 {
     std::vector<MultiMediaSourceTuple> filePathVec = {};
     // todo: 通过时间段，找出对应的文件列表，同时应该得到第一个文件的开始时刻和最后一个文件结束时刻（也就是需要seek的位置）;
-
+    std::string path = mINI::Instance()[kMP4SavePath] + "/" + app + "/" + stream;
+    
 
     auto poller = EventPollerPool::Instance().getPoller();
     //vhost/app/stream可以随便自己填，现在不限制app应用名了
