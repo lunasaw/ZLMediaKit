@@ -61,7 +61,7 @@ void createPusher(const EventPoller::Ptr &poller,
     g_pusher->setOnShutdown([poller, schema, vhost, app, stream, sourceTuple, url](const SockException &ex) {
         WarnL << "Server connection is closed:" << ex.getErrCode() << " " << ex.what();
         //重新推流
-//        rePushDelay(poller, schema, vhost, app, stream, sourceTuple, url);
+        rePushDelay(poller, schema, vhost, app, stream, sourceTuple, url);
     });
 
     //设置发布结果处理逻辑
@@ -124,8 +124,8 @@ int main(int argc, char *argv[]) {
     //可以使用test_server生成的mp4文件
     //文件使用绝对路径，推流url支持rtsp和rtmp
     std::vector<MultiMediaSourceTuple> filePathVec = {};
-    filePathVec.emplace_back("/Users/hopeliao/workspace/WDianZLMediaKit/release/darwin/Debug/www/record/live/v12345-67890/2023-10-16/10-20-55-0.mp4", 0 *10 * 1000, 0 *45 * 1000);
-    filePathVec.emplace_back("/Users/hopeliao/workspace/WDianZLMediaKit/release/darwin/Debug/www/record/live/v12345-67890/2023-10-25/13-51-13-0.mp4", 20 * 1000, 0);
+    filePathVec.emplace_back("/Users/hopeliao/workspace/WDianZLMediaKit/release/darwin/Debug/www/record/live/v12345-67890/2023-10-16/10-20-55-0.mp4",0 *30 * 1000, 0 *45 * 1000);
+    filePathVec.emplace_back("/Users/hopeliao/workspace/WDianZLMediaKit/release/darwin/Debug/www/record/live/v12345-67890/2023-10-25/13-51-13-0.mp4", 0 * 1000, 0);
     filePathVec.emplace_back("/Users/hopeliao/workspace/WDianZLMediaKit/release/darwin/Debug/www/record/live/v12345-67890/2023-10-25/13-51-13-0.mp4", 0, 0);
 
     return domain(filePathVec, "rtsp://127.0.0.1/live/rtsp_push");
