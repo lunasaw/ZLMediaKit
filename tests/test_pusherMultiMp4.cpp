@@ -61,7 +61,7 @@ void createPusher(const EventPoller::Ptr &poller,
     g_pusher->setOnShutdown([poller, schema, vhost, app, stream, sourceTuple, url](const SockException &ex) {
         WarnL << "Server connection is closed:" << ex.getErrCode() << " " << ex.what();
         //重新推流
-        rePushDelay(poller, schema, vhost, app, stream, sourceTuple, url);
+//        rePushDelay(poller, schema, vhost, app, stream, sourceTuple, url);
     });
 
     //设置发布结果处理逻辑

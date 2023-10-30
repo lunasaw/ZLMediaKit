@@ -1655,9 +1655,9 @@ void installWebApi() {
         if (!src) {
             throw ApiRetException("can not find the stream", API::NotFound);
         }
-        src->getOwnerPoller()->async([src]() {
-            src->close(true);
-        });
+        src->close(true); //这里不光要停止MediaSource，还需要停止pusher;pusher可通过getPusherKey函数获取key去获得，这里暂时没加
+        val["message"] = "停止成功";
+        invoker(200, headerOut, val.toStyledString());
     });
 
 #ifdef ENABLE_WEBRTC
