@@ -76,10 +76,12 @@ bool MultiMP4Reader::isPlayEof() {
 void MultiMP4Reader::checkNeedSeek() {
     MultiMediaSourceTuple currTuple = _current_source_tuple;
     if(currTuple.startMs != 0) {
+        TraceL << "seek to:" << currTuple.startMs;
         seekTo(currTuple.startMs);
     } else {
         _seek_to = 0;
     }
+    _seek_ticker.resetTime(); //强制还原
 }
 
 void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_repeat) {
@@ -134,6 +136,7 @@ bool MultiMP4Reader::readSample() {
     bool readSample = false;
     while (!eof && (_last_dts - _capture_dts) < getCurrentStamp()) {
         _read_mp4_item_done = false;
+
         auto frame = _demuxer->readFrame(keyFrame, eof);
         if (!frame) {
             continue;
@@ -161,6 +164,7 @@ bool MultiMP4Reader::readSample() {
 //                   << ",capture:" << _capture_dts
 //                   << ",_last_dts:" << _last_dts
 //                   << ",_capture_dts:" << _capture_dts
+//                   << ",isKeyFrame:" << frame->keyFrame()
 //                   << ",now:" << getCurrentStamp();
             _muxer->inputFrame(frame);
         }
@@ -211,6 +215,7 @@ void MultiMP4Reader::setCurrentStamp(uint32_t new_stamp) {
 //        //时间轴未拖动时不操作
 //        _muxer->setTimeStamp(new_stamp);
 //    }
+    TraceL << "MultiMP4Reader::setCurrentStamp:" << new_stamp;
 }
 
 bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
