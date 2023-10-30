@@ -238,7 +238,9 @@ public:
     /**
      * 写入帧数据
      */
-    bool inputFrame(const Frame::Ptr &frame) override { return _callback(frame); }
+    bool inputFrame(const Frame::Ptr &frame) override {
+        return _callback(frame);
+    }
 
 private:
     onWriteFrame _callback;

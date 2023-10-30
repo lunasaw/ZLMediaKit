@@ -45,6 +45,7 @@ foreach(TEST_SRC ${TEST_SRC_LIST})
     SET_PROPERTY(TARGET ${TEST_EXE_NAME} PROPERTY FOLDER "test")
   endif()
 
+#  message(STATUS "test folder MK_LINK_LIBRARIES:${MK_LINK_LIBRARIES}")
   if(CMAKE_SYSTEM_NAME MATCHES "Linux")
     target_link_libraries(${TEST_EXE_NAME} -Wl,--start-group ${MK_LINK_LIBRARIES} -Wl,--end-group)
   else()

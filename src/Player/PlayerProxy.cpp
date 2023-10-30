@@ -99,6 +99,9 @@ void PlayerProxy::setTranslationInfo()
 void PlayerProxy::play(const string &strUrlTmp) {
     weak_ptr<PlayerProxy> weakSelf = shared_from_this();
     std::shared_ptr<int> piFailedCnt(new int(0)); // 连续播放失败次数
+    // PlayerProxy 继承自 MediaPlayer 继承自PlayerImp<PlayerBase, PlayerBase>，
+    // 实际为 PlayerImp::setOnPlayResult()
+    // 1. 注册创建总封装回调
     setOnPlayResult([weakSelf, strUrlTmp, piFailedCnt](const SockException &err) {
         auto strongSelf = weakSelf.lock();
         if (!strongSelf) {
@@ -131,6 +134,9 @@ void PlayerProxy::play(const string &strUrlTmp) {
             strongSelf->_on_close(err);
         }
     });
+    // PlayerProxy 继承自 MediaPlayer 继承自PlayerImp<PlayerBase, PlayerBase>，
+    // 实际为 PlayerImp::setOnShutdown()
+    // 2. 注册结束回调
     setOnShutdown([weakSelf, strUrlTmp, piFailedCnt](const SockException &err) {
         auto strongSelf = weakSelf.lock();
         if (!strongSelf) {
@@ -171,6 +177,7 @@ void PlayerProxy::play(const string &strUrlTmp) {
         }
     });
     try {
+        // 3. 创建拉流结构体，创建socket连接，触发Rtsp协议发送，并注册数据回调
         MediaPlayer::play(strUrlTmp);
     } catch (std::exception &ex) {
         ErrorL << ex.what();
@@ -193,6 +200,7 @@ void PlayerProxy::setDirectProxy() {
         // rtmp拉流,rtmp强制直接代理
         mediaSource = std::make_shared<RtmpMediaSource>(_tuple);
     }
+    // PlayerProxy 继承自 MediaPlayer : public PlayerImp<PlayerBase, PlayerBase>
     if (mediaSource) {
         setMediaSource(mediaSource);
     }

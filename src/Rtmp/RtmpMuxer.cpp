@@ -40,7 +40,10 @@ bool RtmpMuxer::addTrack(const Track::Ptr &track) {
 
 bool RtmpMuxer::inputFrame(const Frame::Ptr &frame) {
     auto &encoder = _encoder[frame->getTrackType()];
-    return encoder ? encoder->inputFrame(frame) : false;
+    if(encoder) {
+        return encoder->inputFrame(frame);
+    }
+    return false;
 }
 
 void RtmpMuxer::flush() {

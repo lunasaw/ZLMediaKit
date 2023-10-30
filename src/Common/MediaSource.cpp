@@ -17,6 +17,7 @@
 #include "Common/Parser.h"
 #include "Common/MultiMediaSourceMuxer.h"
 #include "Record/MP4Reader.h"
+#include "Record/MultiMP4Reader.h"
 #include "PacketCache.h"
 
 using namespace std;
@@ -614,7 +615,12 @@ void MediaInfo::parse(const std::string &url_in){
     }
 }
 
-MediaSource::Ptr MediaSource::createFromMP4(const string &schema, const string &vhost, const string &app, const string &stream, const string &file_path , bool check_app){
+MediaSource::Ptr MediaSource::createFromMP4(const string &schema,
+                                            const string &vhost,
+                                            const string &app,
+                                            const string &stream,
+                                            const string &file_path ,
+                                            bool check_app){
     GET_CONFIG(string, appName, Record::kAppName);
     if (check_app && app != appName) {
         return nullptr;
@@ -622,6 +628,31 @@ MediaSource::Ptr MediaSource::createFromMP4(const string &schema, const string &
 #ifdef ENABLE_MP4
     try {
         auto reader = std::make_shared<MP4Reader>(vhost, app, stream, file_path);
+        reader->startReadMP4();
+        return MediaSource::find(schema, vhost, app, stream);
+    } catch (std::exception &ex) {
+        WarnL << ex.what();
+        return nullptr;
+    }
+#else
+    WarnL << "创建MP4点播失败，请编译时打开\"ENABLE_MP4\"选项";
+    return nullptr;
+#endif //ENABLE_MP4
+}
+
+MediaSource::Ptr MediaSource::createFromMultiMP4(const std::string &schema,
+                                                const std::string &vhost,
+                                                const std::string &app,
+                                                const std::string &stream,
+                                                const std::vector<MultiMediaSourceTuple> sourceTuple,
+                                                bool check_app) {
+    GET_CONFIG(string, appName, Record::kAppName);
+    if (check_app && app != appName) {
+        return nullptr;
+    }
+#ifdef ENABLE_MP4
+    try {
+        auto reader = std::make_shared<MultiMP4Reader>(vhost, app, stream, sourceTuple);
         reader->startReadMP4();
         return MediaSource::find(schema, vhost, app, stream);
     } catch (std::exception &ex) {

@@ -420,6 +420,12 @@ public:
     bool keyFrame() const override { return _is_key; }
     bool configFrame() const override { return false; }
     void setCodecId(CodecId codec_id) { _codec_id = codec_id; }
+    void setDTS(uint64_t dts) {
+        _dts = dts;
+    }
+    void setPTS(uint64_t pts) {
+        _pts = pts;
+    }
 
     CodecId getCodecId() const override {
         if (_codec_id == CodecInvalid) {

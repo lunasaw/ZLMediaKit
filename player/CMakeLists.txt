@@ -25,6 +25,7 @@ set(LINK_LIBRARIES ${MK_LINK_LIBRARIES})
 
 find_package(PkgConfig QUIET)
 # 查找 SDL2 是否安装
+message("PKG_CONFIG_FOUND:${PKG_CONFIG_FOUND}")
 if(PKG_CONFIG_FOUND)
   pkg_check_modules(SDL2 QUIET IMPORTED_TARGET sdl2)
   if(SDL2_FOUND)

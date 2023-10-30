@@ -42,7 +42,7 @@ endif()
 if(IOS)
   add_library(MediaServer STATIC ${MediaServer_SRC_LIST})
 else()
-  add_executable(MediaServer ${MediaServer_SRC_LIST})
+  add_executable(MediaServer ${MediaServer_SRC_LIST}) #构建可执行文件
 endif()
 
 target_compile_definitions(MediaServer

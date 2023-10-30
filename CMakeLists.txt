@@ -31,12 +31,16 @@ project(ZLMediaKit LANGUAGES C CXX)
 # 使能 C++11
 set(CMAKE_CXX_STANDARD 11)
 
+set(ENABLE_FFMPEG "ON")
+set(ENABLE_X264 "ON")
+set(ENABLE_FAAC "ON")
+
 option(ENABLE_API "Enable C API SDK" ON)
 option(ENABLE_API_STATIC_LIB "Enable mk_api static lib" OFF)
 option(ENABLE_ASAN "Enable Address Sanitize" OFF)
 option(ENABLE_CXX_API "Enable C++ API SDK" OFF)
-option(ENABLE_FAAC "Enable FAAC" OFF)
-option(ENABLE_FFMPEG "Enable FFmpeg" OFF)
+option(ENABLE_FAAC "Enable FAAC" ${ENABLE_FAAC})
+option(ENABLE_FFMPEG "Enable FFmpeg" ${ENABLE_FFMPEG})
 option(ENABLE_HLS "Enable HLS" ON)
 option(ENABLE_JEMALLOC_STATIC "Enable static linking to the jemalloc library" OFF)
 option(ENABLE_MEM_DEBUG "Enable Memory Debug" OFF)
@@ -53,10 +57,11 @@ option(ENABLE_SRT "Enable SRT" ON)
 option(ENABLE_TESTS "Enable Tests" ON)
 option(ENABLE_SCTP "Enable SCTP" ON)
 option(ENABLE_WEBRTC "Enable WebRTC" ON)
-option(ENABLE_X264 "Enable x264" OFF)
+option(ENABLE_X264 "Enable x264" ${ENABLE_X264})
 option(ENABLE_WEPOLL "Enable wepoll" ON)
 option(DISABLE_REPORT "Disable report to report.zlmediakit.com" off)
 option(USE_SOLUTION_FOLDERS "Enable solution dir supported" ON)
+
 
 ##############################################################################
 
@@ -97,6 +102,8 @@ string(TOLOWER ${CMAKE_SYSTEM_NAME} SYSTEM_NAME_LOWER)
 set(OUTPUT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/release/${SYSTEM_NAME_LOWER}/${CMAKE_BUILD_TYPE})
 set(LIBRARY_OUTPUT_PATH    ${OUTPUT_DIR})
 set(EXECUTABLE_OUTPUT_PATH ${OUTPUT_DIR})
+
+message(STATUS "EXECUTABLE_OUTPUT_PATH:${EXECUTABLE_OUTPUT_PATH}")
 
 # 添加 git 版本信息
 set(COMMIT_HASH "Git_Unkown_commit")
@@ -451,7 +458,7 @@ if(ENABLE_API)
 endif()
 
 ##############################################################################
-
+message("ENABLE_PLAYER:${ENABLE_PLAYER} ENABLE_FFMPEG:${ENABLE_FFMPEG}")
 if(ENABLE_PLAYER AND ENABLE_FFMPEG)
   add_subdirectory(player)
 endif()

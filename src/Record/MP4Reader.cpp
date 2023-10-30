@@ -82,6 +82,10 @@ bool MP4Reader::readSample() {
     }
 
     GET_CONFIG(bool, file_repeat, Record::kFileRepeat);
+    if(eof) {
+        TraceL << "MP4Reader readSample EOF. config.fileRepeat:" << file_repeat << ",_file_repeat:" << _file_repeat;
+//        return false;
+    }
     if (eof && (file_repeat || _file_repeat)) {
         //需要从头开始看
         seekTo(0);
@@ -123,6 +127,7 @@ void MP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_repeat
 
     //启动定时器
     if (ref_self) {
+        //callback 返回false 不在重复
         _timer = std::make_shared<Timer>(timer_sec, [strong_self]() {
             lock_guard<recursive_mutex> lck(strong_self->_mtx);
             return strong_self->readSample();

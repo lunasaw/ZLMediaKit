@@ -1641,6 +1641,25 @@ void installWebApi() {
         });
     });
 
+    api_regist("/index/api/stopMultiFilePusher",[](API_ARGS_MAP_ASYNC){
+        CHECK_SECRET();
+        CHECK_ARGS("vhost","app","stream", "schema")
+        std::string schema = allArgs["schema"];
+        std::string vhost =  allArgs["vhost"];
+        std::string stream =  allArgs["stream"];
+        std::string app =  allArgs["app"];
+        std::string url =  allArgs["url"];
+
+        auto key = getPusherKey(schema, vhost, app, stream, url);
+        auto src = MediaSource::find(schema, vhost, app, stream);
+        if (!src) {
+            throw ApiRetException("can not find the stream", API::NotFound);
+        }
+        src->getOwnerPoller()->async([src]() {
+            src->close(true);
+        });
+    });
+
 #ifdef ENABLE_WEBRTC
     class WebRtcArgsImp : public WebRtcArgs {
     public:

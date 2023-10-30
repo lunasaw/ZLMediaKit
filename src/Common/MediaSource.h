@@ -18,6 +18,7 @@
 #include "Network/Socket.h"
 #include "Extension/Track.h"
 #include "Record/Recorder.h"
+#include "Record/MultiMediaSourceTuple.h"
 
 namespace toolkit {
 class Session;
@@ -403,7 +404,19 @@ public:
     // 遍历所有流
     static void for_each_media(const std::function<void(const Ptr &src)> &cb, const std::string &schema = "", const std::string &vhost = "", const std::string &app = "", const std::string &stream = "");
     // 从mp4文件生成MediaSource
-    static MediaSource::Ptr createFromMP4(const std::string &schema, const std::string &vhost, const std::string &app, const std::string &stream, const std::string &file_path = "", bool check_app = true);
+    static MediaSource::Ptr createFromMP4(const std::string &schema,
+                                          const std::string &vhost,
+                                          const std::string &app,
+                                          const std::string &stream,
+                                          const std::string &file_path = "",
+                                          bool check_app = true);
+    //从文件列表中生成MediaSource
+    static MediaSource::Ptr createFromMultiMP4(const std::string &schema,
+                                          const std::string &vhost,
+                                          const std::string &app,
+                                          const std::string &stream,
+                                          const std::vector<MultiMediaSourceTuple> sourceTuple,
+                                          bool check_app = true);
 
 protected:
     //媒体注册
