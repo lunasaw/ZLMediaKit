@@ -14,7 +14,7 @@
 #include <regex>
 #include <sstream>
 #include <algorithm>
-#include "record/MultiMediaSourceTuple.h"
+#include "Record/MultiMediaSourceTuple.h"
 
 namespace mediakit {
 
