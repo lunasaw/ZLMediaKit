@@ -1,7 +1,5 @@
 //
-//  Utils.cpp
-//  test
-//
+//  FileScanner.cpp
 //  Created by weidian on 2023/10/30.
 //
 
@@ -23,7 +21,7 @@ void Scanner::initInfo(std::shared_ptr<Info>& fn, const std::string seq, const s
     fn->mm = stoi(infos[1]);
     fn->ss = stoi(infos[2]);
     
-    for(int i = 0; i < infos.size(); i++) {
+    for(size_t i = 0; i < infos.size(); i++) {
         strstream << infos[i];
     }
     if(isStart)
@@ -57,7 +55,7 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     std::vector<std::string> start_time_ans = split(start_time, seq);
     std::vector<std::string> end_time_ans = split(end_time, seq);
     if(start_time_ans[0] != end_time_ans[0])
-        return myfiles;
+        return {};
         
     std::shared_ptr<Info> st = std::make_shared<Info>();
     std::shared_ptr<Info> et = std::make_shared<Info>();
@@ -94,7 +92,7 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
         }
         closedir(dir);
     } else {
-        return myfiles;
+        return {};
     }
     sort(myfiles.begin(), myfiles.end(), time_compare_st);
     return myfiles;
