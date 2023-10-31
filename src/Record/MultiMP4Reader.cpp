@@ -29,11 +29,17 @@ MultiMP4Reader::~MultiMP4Reader() {
 }
 
 bool MultiMP4Reader::loadMP4(int index) {
-    if (_file_path.size() - index <= 0.0)
+    if (_file_path.empty())
         return false;
 
     MultiMediaSourceTuple tuple = _file_path.at(index);
     _current_source_tuple = tuple;
+    if(File::fileExist(tuple.path.c_str())) {
+        TraceL << "found path:" << tuple.path;
+    } else {
+        TraceL << "not found path:" << tuple.path;
+        return false;
+    }
     _demuxer = std::make_shared<MP4Demuxer>();
     _demuxer->openMP4(tuple.path);
 
@@ -85,6 +91,10 @@ void MultiMP4Reader::checkNeedSeek() {
 }
 
 void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_repeat) {
+    if(_file_path.empty()) {
+        ErrorL << " file path empty";
+        return;
+    }
     GET_CONFIG(uint32_t, sampleMS, Record::kSampleMS);
     auto strong_self = shared_from_this();
     if (_muxer) {
@@ -181,7 +191,6 @@ bool MultiMP4Reader::readSample() {
         }
     }
 
-    GET_CONFIG(bool, file_repeat, Record::kFileRepeat);
     if(eof) {
         if(isPlayEof()) {
             TraceL << "play eof.";
@@ -189,21 +198,23 @@ bool MultiMP4Reader::readSample() {
         }
         _capture_dts = _last_dts;
         _capture_pts = _last_pts;
-        TraceL << "MultiMP4Reader readSample EOF. config.fileRepeat:" << file_repeat
+        TraceL << "MultiMP4Reader readSample EOF."
                << ",_file_repeat:" << _file_repeat
                << ", isPlayEof:" << isPlayEof();
 
         _capture_seek_to += _seek_to;
-        loadMP4(_currentIndex);
-        checkNeedSeek();
-        eof = false;
+        if(loadMP4(_currentIndex)) {
+            checkNeedSeek();
+            eof = false;
+        } else {
+            eof = true;
+        }
     }
-    if (eof && (file_repeat || _file_repeat)) {
+    if (eof && _file_repeat) {
         //需要从头开始看
         seekTo(0);
         return true;
     }
-
     return !eof;
 }
 
