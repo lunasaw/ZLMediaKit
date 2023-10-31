@@ -41,7 +41,7 @@ MP4Recorder::~MP4Recorder() {
 void MP4Recorder::createFile() {
     closeFile();
     auto date = getTimeStr("%Y-%m-%d");
-    auto file_name_begin = getTimeStr("%H-%M-%S");
+    auto file_name_begin = getTimeStr("%H%M%S");
     auto file_name = file_name_begin + "-" + std::to_string(_file_index++) + ".mp4";
     auto full_path = _folder_path + date + "/" + file_name;
     auto full_path_tmp = _folder_path + date + "/." + file_name;
@@ -90,7 +90,7 @@ void MP4Recorder::asyncClose() {
                 return;
             }
             // 临时文件名改成正式文件名，防止mp4未完成时被访问
-            auto end_time = getTimeStr("%H-%M-%S");
+            auto end_time = getTimeStr("%H%M%S");
             auto full_path_end = info.file_name_begin + "-" + end_time + ".mp4";
             rename(full_path_tmp.data(), full_path_end.data());
             // rename(full_path_tmp.data(), full_path.data());
