@@ -41,12 +41,14 @@ MP4Recorder::~MP4Recorder() {
 void MP4Recorder::createFile() {
     closeFile();
     auto date = getTimeStr("%Y-%m-%d");
-    auto file_name = getTimeStr("%H-%M-%S") + "-" + std::to_string(_file_index++) + ".mp4";
+    auto file_name_begin = getTimeStr("%H-%M-%S");
+    auto file_name = file_name_begin + "-" + std::to_string(_file_index++) + ".mp4";
     auto full_path = _folder_path + date + "/" + file_name;
     auto full_path_tmp = _folder_path + date + "/." + file_name;
 
     /////record 业务逻辑//////
     _info.start_time = ::time(NULL);
+    _info.file_name_begin = file_name_begin;
     _info.file_name = file_name;
     _info.file_path = full_path;
     GET_CONFIG(string, appName, Record::kAppName);
@@ -88,7 +90,10 @@ void MP4Recorder::asyncClose() {
                 return;
             }
             // 临时文件名改成正式文件名，防止mp4未完成时被访问
-            rename(full_path_tmp.data(), full_path.data());
+            auto end_time = getTimeStr("%H-%M-%S");
+            auto full_path_end = info.file_name_begin + "_" + end_time + ".mp4";
+            rename(full_path_tmp.data(), full_path_end.data());
+            // rename(full_path_tmp.data(), full_path.data());
         }
         TraceL << "Emit mp4 record event: " << full_path;
         //触发mp4录制切片生成事件

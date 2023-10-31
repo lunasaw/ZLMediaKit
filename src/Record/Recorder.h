@@ -36,6 +36,7 @@ public:
     std::string file_name;   // 文件名称
     std::string folder;      // 文件夹路径
     std::string url;         // 播放路径
+    std::string file_name_begin;
 };
 
 class Recorder{
