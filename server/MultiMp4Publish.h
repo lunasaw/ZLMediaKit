@@ -44,7 +44,9 @@ private:
     {
     public:
         Mp4Pusher(MultiMp4Publish* parent, std::string id):_parent(parent), _id(id){}
-        ~Mp4Pusher(){}
+        ~Mp4Pusher(){
+            _src->close(true);
+        }
 
         void Start(const EventPoller::Ptr &poller, 
                     const string &schema,

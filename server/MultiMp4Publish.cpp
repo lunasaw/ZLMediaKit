@@ -99,7 +99,7 @@ void MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
     _pusher->setOnShutdown([this, poller, schema, vhost, app, stream, filePath, url](const SockException &ex) {
         WarnL << "Server connection is closed:" << ex.getErrCode() << " " << ex.what();
         //重新推流
-        rePushDelay(poller, schema, vhost, app, stream, filePath, url);
+        // rePushDelay(poller, schema, vhost, app, stream, filePath, url);
     });
 
     //设置发布结果处理逻辑
