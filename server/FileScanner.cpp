@@ -35,7 +35,6 @@ void Scanner::initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, con
     if(infos.size() < 2 || infos[0].empty())
         return;
     fn->file_name = info;
-    std::stringstream strstream;
     fn->stime = infos[0];
     fn->etime = infos[1];
 }
@@ -64,7 +63,6 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     initInfo(et, seq, end_time_ans[1], false);
         
     std::string full_path = dir_path.append("/" + start_time_ans[0]);
-        
     seq = "[-.]+";
     if ((dir = opendir(full_path.data())) != nullptr) {
         while ((diread = readdir(dir)) != nullptr ) {
