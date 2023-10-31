@@ -50,6 +50,7 @@ void MP4Recorder::createFile() {
     /////record 业务逻辑//////
     _info.start_time = ::time(NULL);
     _info.file_name_begin = file_name_begin;
+    _info.file_path_begin = file_path_begin;
     _info.file_name = file_name;
     _info.file_path = full_path;
     GET_CONFIG(string, appName, Record::kAppName);
