@@ -91,7 +91,7 @@ void MP4Recorder::asyncClose() {
             }
             // 临时文件名改成正式文件名，防止mp4未完成时被访问
             auto end_time = getTimeStr("%H-%M-%S");
-            auto full_path_end = info.file_name_begin + "_" + end_time + ".mp4";
+            auto full_path_end = info.file_name_begin + "-" + end_time + ".mp4";
             rename(full_path_tmp.data(), full_path_end.data());
             // rename(full_path_tmp.data(), full_path.data());
         }
