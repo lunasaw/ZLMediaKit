@@ -1653,8 +1653,13 @@ void installWebApi() {
         auto stream = allArgs["stream"];
         auto remoteAddress = allArgs["remoteAddress"];
 
-        MultiMp4Publish::GetCreate()->Publish(callid, startTime, endTime, speed, app, stream, remoteAddress);
-
+        std::string errMsg;
+        if(MultiMp4Publish::GetCreate()->Publish(callid, startTime, endTime, speed, app, stream, remoteAddress, errMsg)<0){
+            val["code"] = -1;
+            val["msg"] = errMsg;
+        }else{
+            val["msg"] = "success";
+        }
         invoker(200, headerOut, val.toStyledString());
     });
 
@@ -1662,7 +1667,13 @@ void installWebApi() {
         CHECK_SECRET();
         CHECK_ARGS("callId")
         std::string callid = allArgs["callId"];
-        MultiMp4Publish::GetCreate()->Stop(callid);
+        std::string errMsg;
+        if(MultiMp4Publish::GetCreate()->Stop(callid, errMsg)<0){
+            val["code"] = -1;
+            val["msg"] = errMsg;
+        }else{
+            val["msg"] = errMsg;
+        }
         invoker(200, headerOut, val.toStyledString());
     });
 
