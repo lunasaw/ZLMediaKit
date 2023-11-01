@@ -20,24 +20,32 @@ std::shared_ptr<MultiMp4Publish> MultiMp4Publish::GetCreate()
     return pMp4Publish;
 }
 
-int MultiMp4Publish::Publish(std::string callId, std::string startTime, std::string endTime, std::string speed, std::string app, std::string stream, std::string url)
+int MultiMp4Publish::Publish(std::string callId, std::string startTime, std::string endTime, std::string speed, std::string app, std::string stream, std::string url, std::string& errMsg)
 {
     std::vector<MultiMediaSourceTuple> filePathVec = {};
     // todo: 通过时间段，找出对应的文件列表，同时应该得到第一个文件的开始时刻和最后一个文件结束时刻（也就是需要seek的位置）;
     std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/"+ mINI::Instance()[mediakit::Record::kAppName] + "/" + app + "/" + stream;
     filePathVec = Scanner::getMST(path, startTime, endTime);
+    if(filePathVec.empty()){
+        errMsg = "未匹配到任何文件[时段:" + startTime + " _ " + endTime + ", 路径：" + path + "]";
+        WarnL << errMsg;
+        return -1;
+    }
 
     auto poller = EventPollerPool::Instance().getPoller();
     //vhost/app/stream可以随便自己填，现在不限制app应用名了
-    createPusher(callId, poller, findSubString(url.data(), nullptr, "://").substr(0, 4), DEFAULT_VHOST, app, stream, filePathVec, url);
+    if(createPusher(callId, poller, findSubString(url.data(), nullptr, "://").substr(0, 4), DEFAULT_VHOST, app, stream, filePathVec, url)<0){
+        errMsg = "推流失败";
+        WarnL << errMsg;
+        return -1;
+    }
 
     return 0;
 }
 
-int MultiMp4Publish::Stop(std::string callId)
+int MultiMp4Publish::Stop(std::string callId, std::string& errMsg)
 {
-    deletePusher(callId);
-    return 0;
+    return deletePusher(callId, errMsg);
 }
 
 int MultiMp4Publish::createPusher(std::string callId, 
@@ -49,31 +57,40 @@ int MultiMp4Publish::createPusher(std::string callId,
                                     const std::vector<MultiMediaSourceTuple> &filePath,
                                     const string &url)
 {
-        auto ps = _mp4PushersMap.find(callId);
-        if(ps!=_mp4PushersMap.end()){
-            return -1;
-        }
+    auto ps = _mp4PushersMap.find(callId);
+    if(ps!=_mp4PushersMap.end()){
+        return -1;
+    }
     
 
     std::shared_ptr<MultiMp4Publish::Mp4Pusher> pusher = make_shared<MultiMp4Publish::Mp4Pusher>(this, callId);
     
-    pusher->Start(poller, schema, vhost, app, stream, filePath, url);
+    if(pusher->Start(poller, schema, vhost, app, stream, filePath, url)<0){
+        return -1;
+    }
+    DebugL << "Multi MP4 Pusher Create success.";
     lock_guard<mutex> lock(_pusherMapMutex);	
     _mp4PushersMap.emplace(callId, pusher);
     return 0;
 }
 
-int MultiMp4Publish::deletePusher(std::string callId)
+int MultiMp4Publish::deletePusher(std::string callId, std::string& errMsg)
 {
     lock_guard<mutex> lock(_pusherMapMutex);	
     auto ps = _mp4PushersMap.find(callId);
     if(ps!=_mp4PushersMap.end()){
         _mp4PushersMap.erase(ps);
+        errMsg = "Multi MP4 Pusher Delete success. callId: " + callId;
+        DebugL << errMsg;
+        return 0;
+    }else{
+        errMsg = "Multi MP4 Pusher Delete faild: 不存在此 callId:" + callId;
+        DebugL << errMsg;
+        return -1;
     }
-    return 0;
 }
 
-void MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller, 
+int MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller, 
             const string &schema,
             const string &vhost, 
             const string &app, 
@@ -87,8 +104,9 @@ void MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
     if (!_src) {
         //文件不存在
         WarnL << "MP4文件不存在:" << filePath.size();
-        return;
+        return -1;
     }
+    DebugL << "Multi MP4 source Create success.";
 
     //创建推流器并绑定一个MediaSource
     _pusher.reset(new MediaPusher(_src, poller));
@@ -102,7 +120,8 @@ void MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
         WarnL << "Server connection is closed:" << ex.getErrCode() << " " << ex.what();
         //重新推流
         // rePushDelay(poller, schema, vhost, app, stream, filePath, url);
-        parentPtr->deletePusher(id);
+        std::string msg;
+        parentPtr->deletePusher(id, msg);
     });
 
     //设置发布结果处理逻辑
@@ -116,6 +135,8 @@ void MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
         }
     });
     _pusher->publish(url);
+
+    return 0;
 }
 
 

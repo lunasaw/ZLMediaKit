@@ -25,8 +25,8 @@ public:
     ~MultiMp4Publish();
     static std::shared_ptr<MultiMp4Publish> GetCreate();
 
-    int Publish(std::string callId, std::string startTime, std::string endTime, std::string speed, std::string app, std::string stream, std::string url);
-    int Stop(std::string callId);
+    int Publish(std::string callId, std::string startTime, std::string endTime, std::string speed, std::string app, std::string stream, std::string url, std::string& errMsg);
+    int Stop(std::string callId, std::string& errMsg);
     
 protected:
     int createPusher(std::string callId, 
@@ -37,7 +37,7 @@ protected:
                         const string &stream,
                         const std::vector<MultiMediaSourceTuple> &filePath,
                         const string &url);
-    int deletePusher(std::string callId);
+    int deletePusher(std::string callId, std::string& errMsg);
     
 private:
     class Mp4Pusher
@@ -48,7 +48,7 @@ private:
             _src->close(true);
         }
 
-        void Start(const EventPoller::Ptr &poller, 
+        int Start(const EventPoller::Ptr &poller, 
                     const string &schema,
                     const string &vhost, 
                     const string &app, 
