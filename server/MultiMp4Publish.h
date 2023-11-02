@@ -36,14 +36,15 @@ protected:
                         const string &app,
                         const string &stream,
                         const std::vector<MultiMediaSourceTuple> &filePath,
-                        const string &url);
+                        const string &url,
+                        float speed);
     int deletePusher(std::string callId, std::string& errMsg);
     
 private:
     class Mp4Pusher
     {
     public:
-        Mp4Pusher(MultiMp4Publish* parent, std::string id):_parent(parent), _id(id){}
+        Mp4Pusher(MultiMp4Publish* parent, std::string id, float speed):_parent(parent), _id(id), _speed(speed){}
         ~Mp4Pusher(){
             _src->close(true);
         }
@@ -70,6 +71,7 @@ private:
         MediaSource::Ptr _src = nullptr;
         MultiMp4Publish* _parent = nullptr;
         std::string _id;
+        float _speed;
     };
     
     friend class Mp4Pusher;

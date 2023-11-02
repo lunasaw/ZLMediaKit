@@ -416,7 +416,7 @@ public:
                                           const std::string &app,
                                           const std::string &stream,
                                           const std::vector<MultiMediaSourceTuple> sourceTuple,
-                                          bool check_app = true);
+                                          bool check_app = true, float speed = 1);
 
 protected:
     //媒体注册

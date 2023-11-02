@@ -34,7 +34,7 @@ int MultiMp4Publish::Publish(std::string callId, std::string startTime, std::str
 
     auto poller = EventPollerPool::Instance().getPoller();
     //vhost/app/stream可以随便自己填，现在不限制app应用名了
-    if(createPusher(callId, poller, findSubString(url.data(), nullptr, "://").substr(0, 4), DEFAULT_VHOST, app, stream, filePathVec, url)<0){
+    if(createPusher(callId, poller, findSubString(url.data(), nullptr, "://").substr(0, 4), DEFAULT_VHOST, app, stream, filePathVec, url, atof(speed.c_str())<1.0f?1.0f:atof(speed.c_str()))<0){
         errMsg = "推流失败";
         WarnL << errMsg;
         return -1;
@@ -55,7 +55,8 @@ int MultiMp4Publish::createPusher(std::string callId,
                                     const string &app,
                                     const string &stream,
                                     const std::vector<MultiMediaSourceTuple> &filePath,
-                                    const string &url)
+                                    const string &url,
+                                    float speed)
 {
     auto ps = _mp4PushersMap.find(callId);
     if(ps!=_mp4PushersMap.end()){
@@ -63,7 +64,7 @@ int MultiMp4Publish::createPusher(std::string callId,
     }
     
 
-    std::shared_ptr<MultiMp4Publish::Mp4Pusher> pusher = make_shared<MultiMp4Publish::Mp4Pusher>(this, callId);
+    std::shared_ptr<MultiMp4Publish::Mp4Pusher> pusher = make_shared<MultiMp4Publish::Mp4Pusher>(this, callId, speed);
     
     if(pusher->Start(poller, schema, vhost, app, stream, filePath, url)<0){
         return -1;
@@ -99,7 +100,7 @@ int MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
             const string &url){
     if (!_src) {
         //不限制APP名，并且指定文件绝对路径
-        _src = MediaSource::createFromMultiMP4(_id, schema, vhost, app, stream, filePath, false);
+        _src = MediaSource::createFromMultiMP4(_id, schema, vhost, app, stream, filePath, false, _speed);
     }
     if (!_src) {
         //文件不存在
@@ -150,10 +151,12 @@ void MultiMp4Publish::Mp4Pusher::rePushDelay(const EventPoller::Ptr &poller,
                                             const string &url) {
     MultiMp4Publish* parentPtr = _parent;
     std::string id = _id;
-    _timer = std::make_shared<Timer>(2.0f, [parentPtr, id, poller, schema, vhost, app, stream, sourceTuple, url]() {
+    _timer = std::make_shared<Timer>(2.0f, [this, parentPtr, id, poller, schema, vhost, app, stream, sourceTuple, url]() {
             InfoL << "Re-Publishing...";
             //重新推流
-            parentPtr->createPusher(id, poller, schema, vhost, app, stream, sourceTuple, url);
+            std::string msg;
+            parentPtr->deletePusher(id, msg);
+            parentPtr->createPusher(id, poller, schema, vhost, app, stream, sourceTuple, url, _speed);
             //此任务不重复
             return false;
         }, poller);

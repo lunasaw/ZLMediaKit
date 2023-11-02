@@ -90,7 +90,7 @@ void MultiMP4Reader::checkNeedSeek() {
     _seek_ticker.resetTime(); //强制还原
 }
 
-void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_repeat) {
+void MultiMP4Reader::startReadMP4(float fSpeed, uint64_t sample_ms, bool ref_self, bool file_repeat) {
     if(_file_path.empty()) {
         ErrorL << " file path empty";
         return;
@@ -106,7 +106,7 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
     }
 
     auto timer_sec = (sample_ms ? sample_ms : sampleMS) / 1000.0f;
-
+    speed(*MediaSource::find(_tuple.vhost, _tuple.app, _tuple.stream).get(), fSpeed);
     //启动定时器
     if (ref_self) {
         //callback 返回false 不在重复
@@ -165,8 +165,8 @@ bool MultiMP4Reader::readSample() {
         if (_muxer) {
             auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
             if(frameFromPtr) {
-                frameFromPtr->setPTS(_last_pts);
-                frameFromPtr->setDTS(_last_dts);
+                frameFromPtr->setPTS(_last_pts/_speed);
+                frameFromPtr->setDTS(_last_dts/_speed);
             }
 //            TraceL << "oldDts:" << oldDts
 //                   << ",inputDts:" << frame->dts()
