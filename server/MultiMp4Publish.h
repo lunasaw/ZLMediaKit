@@ -65,10 +65,10 @@ private:
                  const string &url);
 
     private:
-        MediaPusher::Ptr _pusher;
-        Timer::Ptr _timer;
-        MediaSource::Ptr _src;
-        MultiMp4Publish* _parent;
+        MediaPusher::Ptr _pusher = nullptr;
+        Timer::Ptr _timer = nullptr;
+        MediaSource::Ptr _src = nullptr;
+        MultiMp4Publish* _parent = nullptr;
         std::string _id;
     };
     

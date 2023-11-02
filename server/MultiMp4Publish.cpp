@@ -99,7 +99,7 @@ int MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
             const string &url){
     if (!_src) {
         //不限制APP名，并且指定文件绝对路径
-        _src = MediaSource::createFromMultiMP4(schema, vhost, app, stream, filePath, false);
+        _src = MediaSource::createFromMultiMP4(_id, schema, vhost, app, stream, filePath, false);
     }
     if (!_src) {
         //文件不存在
@@ -116,7 +116,7 @@ int MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
     //设置推流中断处理逻辑
     MultiMp4Publish* parentPtr = _parent;
     std::string id = _id;
-    _pusher->setOnShutdown([this, parentPtr, id, poller, schema, vhost, app, stream, filePath, url](const SockException &ex) {
+    _pusher->setOnShutdown([parentPtr, id, poller, schema, vhost, app, stream, filePath, url](const SockException &ex) {
         WarnL << "Server connection is closed:" << ex.getErrCode() << " " << ex.what();
         //重新推流
         // rePushDelay(poller, schema, vhost, app, stream, filePath, url);

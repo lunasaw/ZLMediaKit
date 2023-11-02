@@ -411,7 +411,7 @@ public:
                                           const std::string &file_path = "",
                                           bool check_app = true);
     //从文件列表中生成MediaSource
-    static MediaSource::Ptr createFromMultiMP4(const std::string &schema,
+    static MediaSource::Ptr createFromMultiMP4(const std::string id, const std::string &schema,
                                           const std::string &vhost,
                                           const std::string &app,
                                           const std::string &stream,

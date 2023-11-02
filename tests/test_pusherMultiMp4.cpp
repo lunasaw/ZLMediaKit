@@ -44,7 +44,7 @@ void createPusher(const EventPoller::Ptr &poller,
     InfoL << "schema:" << schema << ",vhost:" << vhost << ",app:" << app << ",stream:" << stream << ",url:" << url;
     if (!g_src) {
         //不限制APP名，并且指定文件绝对路径
-        g_src = MediaSource::createFromMultiMP4(schema, vhost, app, stream, sourceTuple, false);
+        g_src = MediaSource::createFromMultiMP4("1", schema, vhost, app, stream, sourceTuple, false);
     }
     if (!g_src) {
         //文件不存在
