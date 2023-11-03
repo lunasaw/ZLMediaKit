@@ -50,9 +50,16 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     struct dirent *diread;
     std::vector<std::shared_ptr<Info>> myfiles;
     std::string seq = " +";
-        
+    std::vector<std::string> end_time_ans;
+
     std::vector<std::string> start_time_ans = split(start_time, seq);
-    std::vector<std::string> end_time_ans = split(end_time, seq);
+    if(end_time.empty() || end_time == "\"\"") {
+        end_time_ans.push_back(std::string(start_time_ans[0]));
+        end_time_ans.push_back(std::string("23:59:59"));
+    } else {
+        end_time_ans = split(end_time, seq);
+    }
+
     if(start_time_ans[0] != end_time_ans[0])
         return {};
         
