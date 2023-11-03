@@ -50,9 +50,12 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     struct dirent *diread;
     std::vector<std::shared_ptr<Info>> myfiles;
     std::string seq = " +";
+    std::vector<std::string> start_time_ans;
     std::vector<std::string> end_time_ans;
+    
+    WarnL << "视频文件目录路径:"<<dir_path<<" 开始时间:"<<start_time<<" 结束时间:"<<end_time;
 
-    std::vector<std::string> start_time_ans = split(start_time, seq);
+    start_time_ans = split(start_time, seq);
     if(end_time.empty() || end_time == "\"\"") {
         end_time_ans.push_back(std::string(start_time_ans[0]));
         end_time_ans.push_back(std::string("23:59:59"));
@@ -70,6 +73,7 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     initInfo(et, seq, end_time_ans[1], false);
         
     std::string full_path = dir_path.append("/" + start_time_ans[0]);
+    WarnL << "视频文件目录路径为："<<full_path;
     seq = "[-.]+";
     if ((dir = opendir(full_path.data())) != nullptr) {
         while ((diread = readdir(dir)) != nullptr ) {
@@ -105,6 +109,8 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
 
 std::vector<MultiMediaSourceTuple> Scanner::getMST(std::string dir_path, const std::string start_time, const std::string end_time) {
     std::vector<std::shared_ptr<Info>> files = getMediaInfo(dir_path, start_time, end_time);
+    for(auto a : files)
+        std::cout<<a->file_name<<std::endl;
     std::vector<MultiMediaSourceTuple> vec = {};
     for(auto file : files){
         MultiMediaSourceTuple mst;
