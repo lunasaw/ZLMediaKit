@@ -73,15 +73,11 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     initInfo(et, seq, end_time_ans[1], false);
         
     std::string full_path = dir_path.append("/" + start_time_ans[0]);
-    WarnL << "视频文件目录路径为："<<full_path;
     seq = "[-.]+";
     if ((dir = opendir(full_path.data())) != nullptr) {
-        WarnL << "打开视频文件目录成功,路径为："<<full_path;
         while ((diread = readdir(dir)) != nullptr ) {
-            WarnL << "读取文件成功,文件名为 : "<<diread->d_name;
             std::shared_ptr<Info> fn = std::make_shared<Info>();
             initFileInfo(fn, seq, diread->d_name);
-            WarnL << "视频文件名为:"<<fn->file_name<<" fn->stime : "<<fn->stime<<" fn->etime : "<<fn->etime<<" st->stime : "<<st->stime<<" et->etime : "<<et->etime;
             if(!fn->file_name.empty() && et->etime > fn->stime && st->stime < fn->etime) {
                 if(st->stime > fn->stime && st->stime < fn->etime) {
                     int hh = stoi(fn->stime.substr(0,2));
