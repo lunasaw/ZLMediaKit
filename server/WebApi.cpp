@@ -1682,7 +1682,7 @@ void installWebApi() {
         CHECK_SECRET();
         CHECK_ARGS("threshold")
         float threshold = atof(allArgs["threshold"].c_str());
-        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
+        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/record";
         
         if(!DiskSpaceManager::GetCreate()->StartService(path, threshold, 3)){
             val["code"] = -1;

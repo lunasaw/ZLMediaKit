@@ -62,7 +62,7 @@ double DiskSpaceManager::_getDirSizeInMB(std::string path)
 
     pclose(pipe);
 #ifdef DEBUG_RECORD_MANAGER
-    std::cout << "dir size:" << dirSizeInBytes << " MB" << std::endl;
+    std::cout << "dir[ " << path <<" ] size:" << dirSizeInBytes << " MB" << std::endl;
 #endif
     return dirSizeInBytes;
 }
