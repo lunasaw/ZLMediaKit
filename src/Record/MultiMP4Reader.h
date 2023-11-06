@@ -20,7 +20,7 @@ public:
     MultiMP4Reader(const std::string &vhost,
                    const std::string &app,
                    const std::string &stream_id,
-                   const std::vector<MultiMediaSourceTuple> &file_path);
+                   const std::vector<MultiMediaSourceTuple> &file_path, float speed);
     ~MultiMP4Reader() override;
 
     /**
@@ -29,7 +29,7 @@ public:
      * @param ref_self 是否让定时器引用此对象本身，如果无其他对象引用本身，在不循环读文件时，读取文件结束后本对象将自动销毁
      * @param file_repeat 是否循环读取文件，如果配置文件设置为循环读文件，此参数无效
      */
-    void startReadMP4(float fSpeed, uint64_t sample_ms = 0, bool ref_self = true,  bool file_repeat = false);
+    void startReadMP4(uint64_t sample_ms = 0, bool ref_self = true,  bool file_repeat = false);
 
     /**
      * 停止解复用MP4定时器

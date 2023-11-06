@@ -33,8 +33,7 @@ int MultiMp4Publish::Publish(std::string callId, std::string startTime, std::str
     }
 
     auto poller = EventPollerPool::Instance().getPoller();
-    //vhost/app/stream可以随便自己填，现在不限制app应用名了
-    if(createPusher(callId, poller, findSubString(url.data(), nullptr, "://").substr(0, 4), DEFAULT_VHOST, app, stream, filePathVec, url, atof(speed.c_str())<1.0f?1.0f:atof(speed.c_str()))<0){
+    if(createPusher(callId, poller, RTSP_SCHEMA, DEFAULT_VHOST, app, stream, filePathVec, url, atof(speed.c_str())<1.0f?1.0f:atof(speed.c_str()))<0){
         errMsg = "推流失败";
         WarnL << errMsg;
         return -1;
@@ -63,9 +62,7 @@ int MultiMp4Publish::createPusher(std::string callId,
         return -1;
     }
     
-
     std::shared_ptr<MultiMp4Publish::Mp4Pusher> pusher = make_shared<MultiMp4Publish::Mp4Pusher>(this, callId, speed);
-    
     if(pusher->Start(poller, schema, vhost, app, stream, filePath, url)<0){
         return -1;
     }
@@ -98,13 +95,10 @@ int MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
             const string &stream, 
             const std::vector<MultiMediaSourceTuple> &filePath, 
             const string &url){
+ 
+    _src = MediaSource::createFromMultiMP4(_id, schema, vhost, app, stream, filePath, false, _speed);
     if (!_src) {
-        //不限制APP名，并且指定文件绝对路径
-        _src = MediaSource::createFromMultiMP4(_id, schema, vhost, app, stream, filePath, false, _speed);
-    }
-    if (!_src) {
-        //文件不存在
-        WarnL << "MP4文件不存在:" << filePath.size();
+        ErrorL << "Multi MP4 source Create faild:" << filePath.size();
         return -1;
     }
     DebugL << "Multi MP4 source Create success.";

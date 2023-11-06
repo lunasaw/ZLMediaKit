@@ -14,7 +14,9 @@ namespace mediakit {
 MultiMP4Reader::MultiMP4Reader(const std::string &vhost,
                                const std::string &app,
                                const std::string &stream_id,
-                               const std::vector<MultiMediaSourceTuple> &file_path) {
+                               const std::vector<MultiMediaSourceTuple> &file_path,
+                               float speed) {
+    _speed = speed;
     _tuple =  MediaTuple{vhost, app, stream_id};
     _poller = WorkThreadPool::Instance().getPoller();
     _file_path = file_path;
@@ -90,7 +92,7 @@ void MultiMP4Reader::checkNeedSeek() {
     _seek_ticker.resetTime(); //强制还原
 }
 
-void MultiMP4Reader::startReadMP4(float fSpeed, uint64_t sample_ms, bool ref_self, bool file_repeat) {
+void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_repeat) {
     if(_file_path.empty()) {
         ErrorL << " file path empty";
         return;
@@ -106,7 +108,6 @@ void MultiMP4Reader::startReadMP4(float fSpeed, uint64_t sample_ms, bool ref_sel
     }
 
     auto timer_sec = (sample_ms ? sample_ms : sampleMS) / 1000.0f;
-    speed(*MediaSource::find(_tuple.vhost, _tuple.app, _tuple.stream).get(), fSpeed);
     //启动定时器
     if (ref_self) {
         //callback 返回false 不在重复

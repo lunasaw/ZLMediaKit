@@ -652,8 +652,8 @@ MediaSource::Ptr MediaSource::createFromMultiMP4(const std::string id, const std
     }
 #ifdef ENABLE_MP4
     try {
-        auto reader = std::make_shared<MultiMP4Reader>(vhost, app, stream+id, sourceTuple);
-        reader->startReadMP4(speed);
+        auto reader = std::make_shared<MultiMP4Reader>(vhost, app, stream+id, sourceTuple, speed);
+        reader->startReadMP4();
         return MediaSource::find(schema, vhost, app, stream+id);
     } catch (std::exception &ex) {
         WarnL << ex.what();

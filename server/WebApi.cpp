@@ -36,6 +36,7 @@
 #include "Rtp/RtpSelector.h"
 #include "FFmpegSource.h"
 #include "MultiMp4Publish.h"
+#include "DiskSpaceManager.h"
 #if defined(ENABLE_RTPPROXY)
 #include "Rtp/RtpServer.h"
 #endif
@@ -1677,6 +1678,35 @@ void installWebApi() {
         invoker(200, headerOut, val.toStyledString());
     });
 
+    api_regist("/index/api/setStorageThreshold",[](API_ARGS_MAP_ASYNC){
+        CHECK_SECRET();
+        CHECK_ARGS("threshold")
+        float threshold = atof(allArgs["threshold"].c_str());
+        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
+        
+        if(!DiskSpaceManager::GetCreate()->StartService(path, threshold, 3)){
+            val["code"] = -1;
+            val["msg"] = "failed";
+        }else{
+            val["msg"] = "success";
+        }
+        invoker(200, headerOut, val.toStyledString());
+    });
+
+    api_regist("/index/api/getStorageSpace",[](API_ARGS_MAP_ASYNC){
+        CHECK_SECRET();
+        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
+        double space = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
+        if(space<0){
+            val["code"] = -1;
+            val["msg"] = "failed";
+        }else{
+            val["space"] = std::to_string(space);
+            val["msg"] = "success";
+        }
+        invoker(200, headerOut, val.toStyledString());
+    });
+
 #ifdef ENABLE_WEBRTC
     class WebRtcArgsImp : public WebRtcArgs {
     public:
@@ -1710,6 +1740,7 @@ void installWebApi() {
         CHECK_ARGS("type");
         auto type = allArgs["type"];
         auto offer = allArgs.getArgs();
+        std::cout << "xxxxxx" << std::endl;
         CHECK(!offer.empty(), "http body(webrtc offer sdp) is empty");
 
         WebRtcPluginManager::Instance().getAnswerSdp(static_cast<Session&>(sender), type,
@@ -1890,6 +1921,13 @@ void installWebApi() {
 
     api_regist("/index/hook/on_record_mp4",[](API_ARGS_JSON){
         //录制mp4分片完毕事件
+        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
+        double space = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
+        if(space<0){
+            val["space"] = -1;
+        }else{
+            val["space"] = std::to_string(space);
+        }
     });
 
     api_regist("/index/hook/on_shell_login",[](API_ARGS_JSON){

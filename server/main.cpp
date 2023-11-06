@@ -26,6 +26,7 @@
 #include "Rtp/RtpServer.h"
 #include "WebApi.h"
 #include "WebHook.h"
+#include "DiskSpaceManager.h"
 
 #if defined(ENABLE_WEBRTC)
 #include "../webrtc/WebRtcTransport.h"
