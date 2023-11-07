@@ -75,7 +75,7 @@ void MP4Recorder::asyncClose() {
     auto muxer = _muxer;
     auto full_path_tmp = _full_path_tmp;
     auto full_path = _full_path;
-    auto info = _info;
+    mediakit::RecordInfo& info = _info;
     TraceL << "Start close tmp mp4 file: " << full_path_tmp;
     WorkThreadPool::Instance().getExecutor()->async([muxer, full_path_tmp, full_path, info]() mutable {
         info.time_len = muxer->getDuration() / 1000.0f;
@@ -94,6 +94,7 @@ void MP4Recorder::asyncClose() {
             // 临时文件名改成正式文件名，防止mp4未完成时被访问
             auto end_time = getTimeStr("%H%M%S");
             auto full_path_end = info.file_path_begin + "/" + info.file_name_begin + "-" + end_time + ".mp4";
+            info.file_name = info.file_name_begin + "-" + end_time + ".mp4";
             rename(full_path_tmp.data(), full_path_end.data());
             // rename(full_path_tmp.data(), full_path.data());
         }

@@ -20,6 +20,7 @@
 #include "Rtsp/RtspSession.h"
 #include "WebHook.h"
 #include "WebApi.h"
+#include "DiskSpaceManager.h"
 
 using namespace std;
 using namespace Json;
@@ -534,6 +535,9 @@ void installWebHook() {
         body["file_name"] = info.file_name;
         body["folder"] = info.folder;
         body["url"] = info.url;
+        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
+        double space = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
+        body["space"] = std::to_string(space);
         dumpMediaTuple(info, body);
         return body;
     };

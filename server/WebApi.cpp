@@ -1963,16 +1963,7 @@ void installWebApi() {
     });
 
     api_regist("/index/hook/on_record_mp4",[](API_ARGS_JSON){
-        //录制mp4分片完毕事件
-        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
-        double space = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
-     
-        val["fileName"] = allArgs["file_name"];
-        val["fileSize"] = allArgs["file_size"];
-        val["filePath"] = allArgs["file_path"];
-        val["timeLen"] = allArgs["time_len"];
-        val["space"] = std::to_string(space);
-        
+        //录制mp4分片完毕事件        
     });
 
     api_regist("/index/hook/on_shell_login",[](API_ARGS_JSON){
