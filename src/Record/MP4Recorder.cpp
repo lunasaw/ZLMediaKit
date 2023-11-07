@@ -93,9 +93,9 @@ void MP4Recorder::asyncClose() {
             }
             // 临时文件名改成正式文件名，防止mp4未完成时被访问
             auto end_time = getTimeStr("%H%M%S");
-            auto full_path_end = info.file_path_begin + "/" + info.file_name_begin + "-" + end_time + ".mp4";
+            info.full_path_over = info.file_path_begin + "/" + info.file_name_begin + "-" + end_time + ".mp4";
             info.file_name = info.file_name_begin + "-" + end_time + ".mp4";
-            rename(full_path_tmp.data(), full_path_end.data());
+            rename(full_path_tmp.data(), info.full_path_over.data());
             // rename(full_path_tmp.data(), full_path.data());
         }
         TraceL << "Emit mp4 record event: " << full_path;
