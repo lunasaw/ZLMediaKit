@@ -55,6 +55,7 @@ void MP4Recorder::createFile() {
     _info.file_path = full_path;
     GET_CONFIG(string, appName, Record::kAppName);
     _info.url = appName + "/" + _info.app + "/" + _info.stream + "/" + date + "/" + file_name;
+    _info.date = date;
 
     try {
         _muxer = std::make_shared<MP4Muxer>();
@@ -93,9 +94,12 @@ void MP4Recorder::asyncClose() {
             }
             // 临时文件名改成正式文件名，防止mp4未完成时被访问
             auto end_time = getTimeStr("%H%M%S");
-            info.full_path_over = info.file_path_begin + "/" + info.file_name_begin + "-" + end_time + ".mp4";
+            info.file_path = info.file_path_begin + "/" + info.file_name_begin + "-" + end_time + ".mp4";
             info.file_name = info.file_name_begin + "-" + end_time + ".mp4";
-            rename(full_path_tmp.data(), info.full_path_over.data());
+
+            GET_CONFIG(string, appName, Record::kAppName);
+            info.url = appName + "/" + info.app + "/" + info.stream + "/" + info.date + "/" + info.file_name;
+            rename(full_path_tmp.data(), info.file_path.data());
             // rename(full_path_tmp.data(), full_path.data());
         }
         TraceL << "Emit mp4 record event: " << full_path;
