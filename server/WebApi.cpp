@@ -1545,6 +1545,46 @@ void installWebApi() {
         val["data"]["paths"] = paths;
     });
 
+    api_regist("/index/api/getMp4RecordFileInfo", [](API_ARGS_MAP){
+        CHECK_SECRET();
+        CHECK_ARGS("vhost", "app", "stream");
+        auto tuple = MediaTuple{allArgs["vhost"], allArgs["app"], allArgs["stream"]};
+        auto record_path = Recorder::getRecordPath(Recorder::type_mp4, tuple, allArgs["customized_path"]);
+        auto period = allArgs["period"];
+
+        //判断是获取mp4文件列表还是获取文件夹列表
+        bool search_mp4 = period.size() == sizeof("2020-02-01") - 1;
+        if (search_mp4) {
+            record_path = record_path + period + "/";
+        }
+
+        Json::Value fileObj;
+        Json::Value paths(arrayValue);
+        //这是筛选日期，获取文件夹列表
+        File::scanDir(record_path, [&](const string &path, bool isDir) {
+            auto pos = path.rfind('/');
+            if (pos != string::npos) {
+                string relative_path = path.substr(pos + 1);
+                if (search_mp4) {
+                    if (!isDir) {
+                        //我们只收集mp4文件，对文件夹不感兴趣
+                        
+                        fileObj["file"] = relative_path;
+                        fileObj["size"] = std::to_string(File::fileSize(relative_path.c_str()));
+                        paths.append(fileObj);
+                    }
+                } else if (isDir && relative_path.find(period) == 0) {
+                    //匹配到对应日期的文件夹
+                    paths.append(relative_path);
+                }
+            }
+            return true;
+        }, false);
+
+        val["data"]["rootPath"] = record_path;
+        val["data"]["paths"] = paths;
+    });
+
     static auto responseSnap = [](const string &snap_path,
                                   const HttpSession::KeyValue &headerIn,
                                   const HttpSession::HttpResponseInvoker &invoker,
@@ -1697,11 +1737,14 @@ void installWebApi() {
         CHECK_SECRET();
         std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
         double space = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
+        float threshold = DiskSpaceManager::GetCreate()->GetThreshold();
         if(space<0){
             val["code"] = -1;
             val["msg"] = "failed";
         }else{
+            val["path"] = path;
             val["space"] = std::to_string(space);
+            val["threshold"] = std::to_string(threshold);
             val["msg"] = "success";
         }
         invoker(200, headerOut, val.toStyledString());
@@ -1923,11 +1966,13 @@ void installWebApi() {
         //录制mp4分片完毕事件
         std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
         double space = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
-        if(space<0){
-            val["space"] = -1;
-        }else{
-            val["space"] = std::to_string(space);
-        }
+     
+        val["fileName"] = allArgs["file_name"];
+        val["fileSize"] = allArgs["file_size"];
+        val["filePath"] = allArgs["file_path"];
+        val["timeLen"] = allArgs["time_len"];
+        val["space"] = std::to_string(space);
+        
     });
 
     api_regist("/index/hook/on_shell_login",[](API_ARGS_JSON){

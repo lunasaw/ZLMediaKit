@@ -24,7 +24,7 @@ bool DiskSpaceManager::StartService(std::string recordPath, float thresholdMB, f
     _timer = nullptr;
     float timerSec = 3;
     std::string path = recordPath;
-    float threshold = thresholdMB;
+    float threshold = _thresholdMB = thresholdMB;
     _poller = toolkit::WorkThreadPool::Instance().getPoller();
     _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold]() {
         if(_getDirSizeInMB(path) >= threshold){

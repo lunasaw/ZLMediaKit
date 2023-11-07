@@ -25,6 +25,7 @@ public:
     static std::shared_ptr<DiskSpaceManager> GetCreate();
     bool StartService(std::string recordPath, float thresholdMB, float DetectionCycle);
     double GetStorageSpace(std::string recordPath);
+    float GetThreshold() { return _thresholdMB; }
 
 private:
     double _getDirSizeInMB(std::string path);
@@ -36,6 +37,7 @@ private:
     static std::shared_ptr<DiskSpaceManager> _recordManager;
     toolkit::EventPoller::Ptr _poller;
     toolkit::Timer::Ptr _timer;
+    float _thresholdMB = 0.0f;
 };
 
 
