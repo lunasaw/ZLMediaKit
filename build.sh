@@ -34,8 +34,19 @@ cmake -DCMAKE_BUILD_TYPE=${build_type} -DCMAKE_MAKE_PROGRAM=ninja -G Ninja -S ./
 echo "执行编译命令..."
 cmake --build ./cmake-build-${build_type} --target all -j 6
 
+# 根据操作系统确定目录名
+os=$(uname -s)
+if [[ $os == "Darwin" ]]; then
+  os_name="darwin"
+elif [[ $os == "Linux" ]]; then
+  os_name="linux"
+else
+  echo "不支持的操作系统: $os"
+  exit 1
+fi
+
 # 进入编译后的产物目录
-cd ./release/darwin/${build_type}
+cd ./release/${os_name}/${build_type}
 
 # 启动MediaServer服务
 echo "启动MediaServer服务..."
