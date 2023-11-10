@@ -57,8 +57,8 @@ const string kBroadcastNotFoundStream = "kBroadcastNotFoundStream";
 const string kBroadcastStreamNoneReader = "kBroadcastStreamNoneReader";
 const string kBroadcastHttpBeforeAccess = "kBroadcastHttpBeforeAccess";
 const string kBroadcastSendRtpStopped = "kBroadcastSendRtpStopped";
-const string KBroadcastRtpServerTimeout = "KBroadcastRtpServerTimeout";
-const string KBroadcastStreamProxyFail = "KBroadcastStreamProxyFail";
+const string kBroadcastRtpServerTimeout = "kBroadcastRtpServerTimeout";
+const string KBroadcastIPNotFound = "KBroadcastIPNotFound";
 } // namespace Broadcast
 
 // 通用配置项目

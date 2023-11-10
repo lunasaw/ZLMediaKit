@@ -109,8 +109,8 @@ extern const std::string kBroadcastReloadConfig;
 extern const std::string kBroadcastRtpServerTimeout;
 #define BroadcastRtpServerTimeoutArgs uint16_t &local_port, const string &stream_id,int &tcp_mode, bool &re_use_port, uint32_t &ssrc
 
-extern const std::string KBroadcastStreamProxyFail;
-#define BroadcastStreamProxyFailArgs const std::string &url, int &ping
+extern const std::string KBroadcastIPNotFound;
+#define BroadcastIPNotFoundArgs const std::string &url, const std::string &stream, int &ping
 
 #define ReloadConfigTag ((void *)(0xFF))
 #define RELOAD_KEY(arg, key)                                                                                           \
