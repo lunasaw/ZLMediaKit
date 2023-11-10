@@ -702,6 +702,7 @@ void installWebHook() {
         }
         ArgsType body;
         body["url"] = url;
+        body["app"] = app;
         body["stream"] = stream;
         body["type"] = ping;
         do_http_hook(ip_not_found, body);

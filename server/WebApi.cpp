@@ -600,12 +600,12 @@ void webApiAddStreamProxy(const std::string &vhost, const std::string &app, cons
     });
 
     int reconnect_count = 0;
-    player->setOnReconnect([stream, reconnect_count, key](const std::string &url, int retry)mutable {
+    player->setOnReconnect([app, stream, reconnect_count, key](const std::string &url, int retry)mutable {
          reconnect_count = retry;
          InfoL << "reconnect_count:" << reconnect_count;
          if(reconnect_count == 2 || (reconnect_count != 0 && reconnect_count % 10 == 0)) {
              bool isIPReachable = IPAddress::isIPReachable(url);
-             NOTICE_EMIT(BroadcastIPNotFoundArgs, Broadcast::KBroadcastIPNotFound, url, stream, isIPReachable ? 1 : 2);
+             NOTICE_EMIT(BroadcastIPNotFoundArgs, Broadcast::KBroadcastIPNotFound, url, app, stream, isIPReachable ? 1 : 2);
          }
     });
     player->setOnConnect([reconnect_count](const TranslationInfo&) mutable{
@@ -1976,7 +1976,7 @@ void installWebApi() {
 
     api_regist("/index/hook/on_ip_not_found",[](API_ARGS_JSON){
         //拉流代理函数失败
-        InfoL << "/index/hook/on_ip_not_found: " << allArgs["url"] << ",stream:" << allArgs["stream"] << ",type:" << allArgs["type"];
+        InfoL << "/index/hook/on_ip_not_found: " << allArgs["url"] << ",stream:" << allArgs["stream"] << ",app:" << allArgs["app"] << ",type:" << allArgs["type"];
     });
 
 
