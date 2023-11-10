@@ -37,7 +37,8 @@ PlayerProxy::PlayerProxy(
     setOnClose(nullptr);
     setOnConnect(nullptr);
     setOnDisconnect(nullptr);
-    
+    setOnReconnect(nullptr);
+
     _reconnect_delay_min = reconnect_delay_min > 0 ? reconnect_delay_min : 2;
     _reconnect_delay_max = reconnect_delay_max > 0 ? reconnect_delay_max : 60;
     _reconnect_delay_step = reconnect_delay_step > 0 ? reconnect_delay_step : 3;
@@ -61,6 +62,10 @@ void PlayerProxy::setOnDisconnect(std::function<void()> cb) {
 
 void PlayerProxy::setOnConnect(std::function<void(const TranslationInfo&)> cb) {
     _on_connect = cb ? std::move(cb) : [](const TranslationInfo&) {};
+}
+
+void PlayerProxy::setOnReconnect(std::function<void(const std::string &url,int retry)> cb) {
+    _on_reconnect = std::move(cb);
 }
 
 void PlayerProxy::setTranslationInfo()
@@ -129,6 +134,7 @@ void PlayerProxy::play(const string &strUrlTmp) {
             // 播放失败，延时重试播放
             strongSelf->_on_disconnect();
             strongSelf->rePlay(strUrlTmp, (*piFailedCnt)++);
+
         } else {
             // 达到了最大重试次数，回调关闭
             strongSelf->_on_close(err);
@@ -221,6 +227,7 @@ PlayerProxy::~PlayerProxy() {
 
 void PlayerProxy::rePlay(const string &strUrl, int iFailedCnt) {
     auto iDelay = MAX(_reconnect_delay_min * 1000, MIN(iFailedCnt * _reconnect_delay_step * 1000, _reconnect_delay_max * 1000));
+
     weak_ptr<PlayerProxy> weakSelf = shared_from_this();
     _timer = std::make_shared<Timer>(
         iDelay / 1000.0f,
@@ -229,6 +236,9 @@ void PlayerProxy::rePlay(const string &strUrl, int iFailedCnt) {
             auto strongPlayer = weakSelf.lock();
             if (!strongPlayer) {
                 return false;
+            }
+            if(strongPlayer->_on_reconnect) {
+                strongPlayer->_on_reconnect(strUrl, iFailedCnt);
             }
             WarnL << "重试播放[" << iFailedCnt << "]:" << strUrl;
             strongPlayer->MediaPlayer::play(strUrl);

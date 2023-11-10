@@ -50,6 +50,7 @@ const string kOnServerExited = HOOK_FIELD "on_server_exited";
 const string kOnServerKeepalive = HOOK_FIELD "on_server_keepalive";
 const string kOnSendRtpStopped = HOOK_FIELD "on_send_rtp_stopped";
 const string kOnRtpServerTimeout = HOOK_FIELD "on_rtp_server_timeout";
+const string KOnStreamProxyFail = HOOK_FIELD "on_stream_proxy_fail";
 const string kAliveInterval = HOOK_FIELD "alive_interval";
 const string kRetry = HOOK_FIELD "retry";
 const string kRetryDelay = HOOK_FIELD "retry_delay";
@@ -75,6 +76,7 @@ static onceToken token([]() {
     mINI::Instance()[kOnServerKeepalive] = "";
     mINI::Instance()[kOnSendRtpStopped] = "";
     mINI::Instance()[kOnRtpServerTimeout] = "";
+    mINI::Instance()[KOnStreamProxyFail] = "";
     mINI::Instance()[kAliveInterval] = 30.0;
     mINI::Instance()[kRetry] = 1;
     mINI::Instance()[kRetryDelay] = 3.0;
@@ -691,6 +693,19 @@ void installWebHook() {
         body["re_use_port"] = re_use_port;
         body["ssrc"] = ssrc;
         do_http_hook(rtp_server_timeout, body);
+    });
+
+    NoticeCenter::Instance().addListener(&web_hook_tag, Broadcast::KBroadcastStreamProxyFail, [](BroadcastStreamProxyFailArgs) {
+        GET_CONFIG(string, stream_proxy_fail, Hook::KOnStreamProxyFail);
+        if (!hook_enable || stream_proxy_fail.empty()) {
+            return;
+        }
+
+        ArgsType body;
+        body["url"] = url;
+        body["ping"] = ping;
+        
+        do_http_hook(stream_proxy_fail, body);
     });
 
     // 汇报服务器重新启动

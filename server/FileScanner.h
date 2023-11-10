@@ -39,6 +39,12 @@ public:
     static std::vector<std::shared_ptr<Scanner::Info>> getMediaInfo(std::string dir_path, const std::string start_time, const std::string end_time);
     static std::vector<MultiMediaSourceTuple> getMST(std::string dir_path, const std::string start_time, const std::string end_time);
 };
+
+//todo 先放这里，后续再看看如何处理这一块的业务代码如何分包合适
+class IPAddress {
+public:
+    static bool isIPReachable(const std::string &url);
+};
 }
 
 #endif /* Utils_hpp */

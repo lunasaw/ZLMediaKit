@@ -36,6 +36,7 @@
 #include "Rtp/RtpSelector.h"
 #include "FFmpegSource.h"
 #include "MultiMp4Publish.h"
+#include "FileScanner.h"
 #include "DiskSpaceManager.h"
 #if defined(ENABLE_RTPPROXY)
 #include "Rtp/RtpServer.h"
@@ -562,7 +563,6 @@ void addStreamProxy(const string &vhost, const string &app, const string &stream
         }
         cb(ex, key);
     });
-
     //被主动关闭拉流
     player->setOnClose([key](const SockException &ex) {
         lock_guard<recursive_mutex> lck(s_proxyMapMtx);
@@ -570,6 +570,57 @@ void addStreamProxy(const string &vhost, const string &app, const string &stream
     });
     player->play(url);
 };
+
+void webApiAddStreamProxy(const std::string &vhost, const std::string &app, const std::string &stream, const std::string &url, int retry_count,
+                    const mediakit::ProtocolOption &option, int rtp_type, float timeout_sec,
+                    const std::function<void(const toolkit::SockException &ex, const std::string &key)> &cb) {
+    auto key = getProxyKey(vhost, app, stream);
+    lock_guard<recursive_mutex> lck(s_proxyMapMtx);
+    if (s_proxyMap.find(key) != s_proxyMap.end()) {
+        //已经在拉流了
+        cb(SockException(Err_other, "This stream already exists"), key);
+        return;
+    }
+    //添加拉流代理
+    auto player = std::make_shared<PlayerProxy>(vhost, app, stream, option, retry_count);
+    s_proxyMap[key] = player;
+
+    //指定RTP over TCP(播放rtsp时有效)
+    (*player)[Client::kRtpType] = rtp_type;
+
+    if (timeout_sec > 0.1) {
+        //播放握手超时时间
+        (*player)[Client::kTimeoutMS] = timeout_sec * 1000;
+    }
+
+    //开始播放，如果播放失败或者播放中止，将会自动重试若干次，默认一直重试
+    player->setPlayCallbackOnce([cb, key](const SockException &ex) {
+        cb(ex, key);
+    });
+
+    int reconnect_count = 0;
+    player->setOnReconnect([reconnect_count, key](const std::string &url, int retry)mutable {
+         reconnect_count = retry;
+         InfoL << "reconnect_count:" << reconnect_count;
+         if(reconnect_count == 2 || (reconnect_count != 0 && reconnect_count % 10 == 0)) {
+             bool isIPReachable = IPAddress::isIPReachable(url);
+             NOTICE_EMIT(BroadcastStreamProxyFailArgs, Broadcast::KBroadcastStreamProxyFail, url, (int)isIPReachable);
+         }
+    });
+    player->setOnConnect([reconnect_count](const TranslationInfo&) mutable{
+        reconnect_count = 0;
+        InfoL << "Connect cb:" << reconnect_count;
+    });
+
+    //被主动关闭拉流
+    player->setOnClose([key](const SockException &ex) {
+        lock_guard<recursive_mutex> lck(s_proxyMapMtx);
+        s_proxyMap.erase(key);
+
+        InfoL << "Close cb";
+    });
+    player->play(url);
+}
 
 template <typename Type>
 static void getArgsValue(const HttpAllArgs<ApiArgsType> &allArgs, const string &key, Type &value) {
@@ -1053,7 +1104,7 @@ void installWebApi() {
 
         ProtocolOption option(allArgs);
         auto retry_count = allArgs["retry_count"].empty()? -1: allArgs["retry_count"].as<int>();
-        addStreamProxy(allArgs["vhost"],
+        webApiAddStreamProxy(allArgs["vhost"],
                        allArgs["app"],
                        allArgs["stream"],
                        allArgs["url"],
@@ -1896,6 +1947,11 @@ void installWebApi() {
 
     api_regist("/index/hook/on_stream_changed",[](API_ARGS_JSON){
         //媒体注册或反注册事件
+    });
+
+    api_regist("/index/hook/on_stream_proxy_fail",[](API_ARGS_JSON){
+        //拉流代理函数失败
+        InfoL << "/index/hook/on_stream_proxy_fail: " << allArgs["url"] << ",ping:" << allArgs["ping"];
     });
 
 
