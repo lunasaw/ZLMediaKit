@@ -4,7 +4,7 @@
 //
 
 #include "FileScanner.h"
-
+#include <string>
 namespace mediakit {
 
 std::vector<std::string> Scanner::split(const std::string& input, const std::string& regex) {
@@ -123,6 +123,27 @@ std::vector<MultiMediaSourceTuple> Scanner::getMST(std::string dir_path, const s
     return vec;
 }
 
+
+
+bool IPAddress::isIPReachable(const std::string &url) {
+    std::regex ipRegex(R"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))");
+    std::smatch match;
+
+    if (std::regex_search(url, match, ipRegex)) {
+        std::string ip = match[1].str();
+
+        std::string command = "ping -c 1 " + ip;
+        int result = std::system(command.c_str());
+        InfoL << "ping:" << command << ",result:" << !result;
+        // 根据返回值判断是否可联通
+        if (result == 0) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+    return false;
+}
 
 }
 

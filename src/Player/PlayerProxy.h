@@ -97,6 +97,11 @@ public:
     void setOnConnect(std::function<void(const TranslationInfo&)> cb);
 
     /**
+     * 设置重连结束回调
+    */
+    void setOnReconnect(std::function<void(const std::string &url,int retry)> cb);
+
+    /**
      * 开始拉流播放
      * @param strUrl
      */
@@ -141,6 +146,7 @@ private:
     std::function<void(const TranslationInfo &info)> _on_connect;
     std::function<void(const toolkit::SockException &ex)> _on_close;
     std::function<void(const toolkit::SockException &ex)> _on_play;
+    std::function<void(const std::string &url, int retry)> _on_reconnect;
     TranslationInfo _transtalion_info;
     MultiMediaSourceMuxer::Ptr _muxer;
 
