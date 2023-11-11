@@ -26,6 +26,7 @@ public:
     bool StartService(std::string recordPath, float thresholdMB, float DetectionCycle);
     double GetStorageSpace(std::string recordPath);
     float GetThreshold() { return _thresholdMB; }
+    float getSystemDisk(std::string recordPath);//MB
 
 private:
     double _getDirSizeInMB(std::string path);
@@ -38,6 +39,8 @@ private:
     toolkit::EventPoller::Ptr _poller;
     toolkit::Timer::Ptr _timer;
     float _thresholdMB = 0.0f;
+    double _fileCapacity = 0.0 ; //GB
+    double _fileAvailable = 0.0; //GB
 };
 
 

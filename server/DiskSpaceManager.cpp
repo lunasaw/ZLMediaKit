@@ -1,5 +1,7 @@
 #include "DiskSpaceManager.h"
 #include "Thread/WorkThreadPool.h"
+#include <sys/statvfs.h>
+#include <iomanip>
 
 DiskSpaceManager::DiskSpaceManager()
 {
@@ -162,4 +164,27 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
         std::cout << "已删除日期和时间都最久远的文件：" << minDir << "/" << minFile << ".MP4" << std::endl;
 #endif
     }
+}
+
+float DiskSpaceManager::getSystemDisk(std::string recordPath) {
+    //todo 根据recordPath 确认挂在分区的总大小
+    const char * path = recordPath.c_str();
+    struct statvfs buf ;
+    std::cout << "getSystemDisk recordPath :  " <<recordPath<<std::endl;
+    if(statvfs(path,&buf) == -1){
+        //查不到挂在的路径分区大小
+        perror("statbuf");
+        std::cout << "getSystemDisk error :%s " <<path<<std::endl;
+        return -1;
+    }
+    _fileCapacity = (double)buf.f_blocks * buf.f_frsize / (1024 * 1024 * 1024) ;
+    _fileAvailable = (double)buf.f_bavail * buf.f_frsize / (1024 * 1024 * 1024);
+
+#ifdef DEBUG_RECORD_MANAGER
+
+    std::cout << "File system capacity: " <<std::fixed << std::setprecision(2) << _fileCapacity << " GB" << std::endl;
+    std::cout << "File system free space: " << std::fixed << std::setprecision(2) << (double)buf.f_bfree * buf.f_frsize / (1024 * 1024 * 1024) << " GB" << std::endl;
+    std::cout << "File system available space: " << std::fixed << std::setprecision(2) <<_fileAvailable << " GB" << std::endl;
+#endif
+    return _fileCapacity;
 }
