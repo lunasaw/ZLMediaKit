@@ -43,7 +43,8 @@ public:
 //todo 先放这里，后续再看看如何处理这一块的业务代码如何分包合适
 class IPAddress {
 public:
-    static bool isIPReachable(const std::string &url);
+    static std::string getIP(const std::string &url);
+    static bool isIPReachable(const std::string &ip);
 };
 }
 
