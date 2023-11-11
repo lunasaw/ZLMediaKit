@@ -15,6 +15,7 @@
 #include "Util/File.h"
 #include "System.h"
 #include "Thread/WorkThreadPool.h"
+#include "Thread/ThreadPool.h"
 #include "Network/sockutil.h"
 
 using namespace std;
@@ -314,7 +315,8 @@ void FFmpegSnap::makeSnap(const string &play_url, const string &save_path, float
     GET_CONFIG(string, ffmpeg_snap, FFmpeg::kSnap);
     GET_CONFIG(string, ffmpeg_log, FFmpeg::kLog);
     Ticker ticker;
-    WorkThreadPool::Instance().getPoller()->async([timeout_sec, play_url, save_path, cb, ticker]() {
+    static ThreadPool s_pool(8, ThreadPool::PRIORITY_LOWEST, true, false, "ffmpeg snap");
+    s_pool.async([timeout_sec, play_url, save_path, cb, ticker]() {
         auto elapsed_ms = ticker.elapsedTime();
         if (elapsed_ms > timeout_sec * 1000) {
             // 超时，后台线程负载太高，当代太久才启动该任务
