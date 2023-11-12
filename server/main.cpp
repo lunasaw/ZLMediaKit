@@ -426,6 +426,12 @@ int start_main(int argc,char *argv[]) {
             signal(SIGTERM, SIG_IGN);
             sem.post();
         });
+        /*  暂时注释掉磁盘清理入口
+        std::shared_ptr<DiskSpaceManager> manager =  DiskSpaceManager ::GetCreate();
+        std::string zlRecordPath = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/" + "record";
+        float  currentFileCap = manager->getSystemDisk(zlRecordPath);//GB
+        manager->StartService(zlRecordPath,currentFileCap * 1024 * 0.1,0.92);//剩余总容量的10%就会启动清理文件
+         */
 
 #if !defined(_WIN32)
         signal(SIGHUP, [](int) { mediakit::loadIniConfig(g_ini_file.data()); });

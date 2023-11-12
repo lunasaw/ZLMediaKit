@@ -604,8 +604,9 @@ void webApiAddStreamProxy(const std::string &vhost, const std::string &app, cons
          reconnect_count = retry;
          InfoL << "reconnect_count:" << reconnect_count;
          if(reconnect_count == 2 || (reconnect_count != 0 && reconnect_count % 10 == 0)) {
-             bool isIPReachable = IPAddress::isIPReachable(url);
-             NOTICE_EMIT(BroadcastIPNotFoundArgs, Broadcast::KBroadcastIPNotFound, url, app, stream, isIPReachable ? 1 : 2);
+             std::string ip = IPAddress::getIP(url);
+             bool isIPReachable = IPAddress::isIPReachable(ip);
+             NOTICE_EMIT(BroadcastIPNotFoundArgs, Broadcast::KBroadcastIPNotFound, url, app, stream, ip, isIPReachable ? 1 : 2);
          }
     });
     player->setOnConnect([reconnect_count](const TranslationInfo&) mutable{
