@@ -106,7 +106,7 @@ void DiskSpaceManager::_removeHiddenFiles(const std::string& path)
     }
 }
 
-void DiskSpaceManager::_deleteOldestFile(const std::string& path) 
+void DiskSpaceManager::_deleteOldestFile(const std::string& path)
 {
     std::string minDir;
     std::string minTimestamp;
@@ -175,7 +175,7 @@ float DiskSpaceManager::getSystemDisk(std::string recordPath) {
         //查不到挂在的路径分区大小
         perror("statbuf");
         std::cout << "getSystemDisk error :%s " <<path<<std::endl;
-        return -1;
+        return 0;
     }
     _fileCapacity = (double)buf.f_blocks * buf.f_frsize / (1024 * 1024 * 1024) ;
     _fileAvailable = (double)buf.f_bavail * buf.f_frsize / (1024 * 1024 * 1024);

@@ -427,9 +427,7 @@ int start_main(int argc,char *argv[]) {
             sem.post();
         });
         std::shared_ptr<DiskSpaceManager> manager =  DiskSpaceManager ::GetCreate();
-//        /home/orangepi/VDianZLMediaKit/release/linux/Release
-//        std::string zlRecordPath = "/home/orangepi/VDianZLMediaKit/release/linux/Release/www/record";
-        std::string zlRecordPath = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/";
+        std::string zlRecordPath = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/" + "record";
         float  currentFileCap = manager->getSystemDisk(zlRecordPath);//GB
         manager->StartService(zlRecordPath,currentFileCap * 1024 * 0.1,0.92);
 
