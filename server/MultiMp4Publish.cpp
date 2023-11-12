@@ -57,10 +57,13 @@ int MultiMp4Publish::createPusher(std::string callId,
                                     const string &url,
                                     float speed)
 {
+    _pusherMapMutex.lock();
     auto ps = _mp4PushersMap.find(callId);
     if(ps!=_mp4PushersMap.end()){
+        _pusherMapMutex.unlock();
         return -1;
     }
+    _pusherMapMutex.unlock();
     
     std::shared_ptr<MultiMp4Publish::Mp4Pusher> pusher = make_shared<MultiMp4Publish::Mp4Pusher>(this, callId, speed);
     if(pusher->Start(poller, schema, vhost, app, stream, filePath, url)<0){
