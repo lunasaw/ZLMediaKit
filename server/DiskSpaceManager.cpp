@@ -159,9 +159,9 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
 
     // 删除日期和时间都最久远的文件
     if (!minTimestamp.empty()) {
-        std::filesystem::remove(std::filesystem::path(minDir) / (minFile + ".MP4"));
+        bool result  = std::filesystem::remove(std::filesystem::path(minDir) / (minFile + ".MP4"));
 #ifdef DEBUG_RECORD_MANAGER
-        std::cout << "已删除日期和时间都最久远的文件：" << minDir << "/" << minFile << ".MP4" << std::endl;
+        std::cout << "已删除日期和时间都最久远的文件：" << minDir << "/" << minFile << ".MP4" << ",result"<<result<<std::endl;
 #endif
     }
 }
@@ -171,15 +171,17 @@ float DiskSpaceManager::getSystemDisk(std::string recordPath) {
     const char * path = recordPath.c_str();
     struct statvfs buf ;
     std::cout << "getSystemDisk recordPath :  " <<recordPath<<std::endl;
+    InfoL << "getSystemDisk" << recordPath <<std::endl;
     if(statvfs(path,&buf) == -1){
         //查不到挂在的路径分区大小
         perror("statbuf");
-        std::cout << "getSystemDisk error :%s " <<path<<std::endl;
+        std::cout << "getSystemDisk error : " <<path<<std::endl;
+        InfoL << "getSystemDisk error :" << path <<std::endl;
         return 0;
     }
     _fileCapacity = (double)buf.f_blocks * buf.f_frsize / (1024 * 1024 * 1024) ;
     _fileAvailable = (double)buf.f_bavail * buf.f_frsize / (1024 * 1024 * 1024);
-
+    InfoL << "getSystemDisk _fileCapacity " << _fileCapacity  << ", _fileAvailable " <<_fileAvailable << std::endl;
 #ifdef DEBUG_RECORD_MANAGER
 
     std::cout << "File system capacity: " <<std::fixed << std::setprecision(2) << _fileCapacity << " GB" << std::endl;
