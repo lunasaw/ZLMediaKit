@@ -159,9 +159,10 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
 
     // 删除日期和时间都最久远的文件
     if (!minTimestamp.empty()) {
-        bool result  = std::filesystem::remove(std::filesystem::path(minDir) / (minFile + ".MP4"));
+        bool result  = std::filesystem::remove(std::filesystem::path(minDir) / (minFile + ".mp4"));
 #ifdef DEBUG_RECORD_MANAGER
-        std::cout << "已删除日期和时间都最久远的文件：" << minDir << "/" << minFile << ".MP4" << ",result"<<result<<std::endl;
+        std::cout << "已删除日期和时间都最久远的文件：" << minDir << "/" << minFile << ".mp4"
+                  << ",result"<<result << ", errno:" << strerror(errno)<<std::endl;
 #endif
     }
 }
