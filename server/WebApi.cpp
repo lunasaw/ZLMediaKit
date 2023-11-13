@@ -1815,6 +1815,7 @@ void installWebApi() {
         std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
         double space = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
         float threshold = DiskSpaceManager::GetCreate()->GetThreshold();
+        float disSpaceCapacity =  DiskSpaceManager::GetCreate()->getSystemDisk(path)  * 1024;//MB
         if(space<0){
             val["code"] = -1;
             val["msg"] = "failed";
@@ -1822,6 +1823,7 @@ void installWebApi() {
             val["path"] = path;
             val["space"] = std::to_string(space);
             val["threshold"] = std::to_string(threshold);
+            val["avaiableSpace"] = std::to_string(disSpaceCapacity);
             val["msg"] = "success";
         }
         invoker(200, headerOut, val.toStyledString());
