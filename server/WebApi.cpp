@@ -1823,7 +1823,7 @@ void installWebApi() {
             val["path"] = path;
             val["space"] = std::to_string(space);
             val["threshold"] = std::to_string(threshold);
-            val["avaiableSpace"] = std::to_string(disSpaceCapacity);
+            val["disSpaceCapacity"] = std::to_string(disSpaceCapacity);
             val["msg"] = "success";
         }
         invoker(200, headerOut, val.toStyledString());
