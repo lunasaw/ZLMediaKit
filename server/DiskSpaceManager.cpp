@@ -5,11 +5,13 @@
 
 DiskSpaceManager::DiskSpaceManager()
 {
+        video_delete_percentage = DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE;
 }
 
 DiskSpaceManager::~DiskSpaceManager()
 {
     _timer = nullptr;
+    video_delete_percentage = 0;
 }
 
 std::shared_ptr<DiskSpaceManager> DiskSpaceManager::_recordManager = nullptr;
@@ -27,6 +29,7 @@ bool DiskSpaceManager::StartService(std::string recordPath, float thresholdMB, f
     float timerSec = 3;
     std::string path = recordPath;
     float threshold = _thresholdMB = thresholdMB;
+    InfoL << "StartService threshold " << threshold <<std::endl;
     _poller = toolkit::WorkThreadPool::Instance().getPoller();
     _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold]() {
         if(_getDirSizeInMB(path) >= threshold){
@@ -171,7 +174,7 @@ float DiskSpaceManager::getSystemDisk(std::string recordPath) {
     //todo 根据recordPath 确认挂在分区的总大小
     const char * path = recordPath.c_str();
     struct statvfs buf ;
-    std::cout << "getSystemDisk recordPath :  " <<recordPath<<std::endl;
+//    std::cout << "getSystemDisk recordPath :  " <<recordPath<<std::endl;
     InfoL << "getSystemDisk" << recordPath <<std::endl;
     if(statvfs(path,&buf) == -1){
         //查不到挂在的路径分区大小
@@ -182,12 +185,53 @@ float DiskSpaceManager::getSystemDisk(std::string recordPath) {
     }
     _fileCapacity = (double)buf.f_blocks * buf.f_frsize / (1024 * 1024 * 1024) ;
     _fileAvailable = (double)buf.f_bavail * buf.f_frsize / (1024 * 1024 * 1024);
-    InfoL << "getSystemDisk _fileCapacity " << _fileCapacity  << ", _fileAvailable " <<_fileAvailable << std::endl;
-#ifdef DEBUG_RECORD_MANAGER
+    double usedDiskCap = (double)((buf.f_blocks - buf.f_bfree) * buf.f_frsize /( 1024 * 1024 * 1024) );
+    InfoL << "getSystemDisk _fileCapacity " << _fileCapacity  << ", _fileAvailable " <<_fileAvailable
+          << ",usedDiskCap " << usedDiskCap << std::endl;
+#ifdef OFF
 
     std::cout << "File system capacity: " <<std::fixed << std::setprecision(2) << _fileCapacity << " GB" << std::endl;
     std::cout << "File system free space: " << std::fixed << std::setprecision(2) << (double)buf.f_bfree * buf.f_frsize / (1024 * 1024 * 1024) << " GB" << std::endl;
     std::cout << "File system available space: " << std::fixed << std::setprecision(2) <<_fileAvailable << " GB" << std::endl;
 #endif
     return _fileCapacity;
+}
+float DiskSpaceManager::getAvailableDiskCap(std::string recordPath) {
+    const char * path = recordPath.c_str();
+    struct statvfs buf ;
+    InfoL << "getAvailableDiskCap" << recordPath <<std::endl;
+    if(statvfs(path,&buf) == -1){
+        //查不到挂在的路径分区大小
+        perror("statbuf");
+        InfoL << "getSystemDisk error :" << path <<std::endl;
+        return 0;
+    }
+    _fileAvailable = (double)buf.f_bavail * buf.f_frsize / (1024 * 1024 * 1024);
+    InfoL  << " _fileAvailable " <<_fileAvailable << std::endl;
+    return _fileAvailable;
+}
+float DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
+    const char * path = recordPath.c_str();
+    struct statvfs buf ;
+    InfoL << "getUsedDisSpace recordPath" << recordPath <<std::endl;
+    if(statvfs(path,&buf) == -1){
+        //查不到挂在的路径分区大小
+        perror("statbuf");
+        InfoL << "getUsedDisSpace error :" << path <<std::endl;
+        return 0;
+    }
+
+    float usedDiskSpace =  ((buf.f_blocks - buf.f_bfree) * buf.f_frsize /(1024*1024*1024) );
+    InfoL  << "usedDiskSpace " << usedDiskSpace << std::endl;
+    return usedDiskSpace;
+}
+
+void DiskSpaceManager::setDeleteVideoThreshold(float thresholdPen) {
+    InfoL  << "setDeleteVideoThreshold " << thresholdPen << std::endl;
+    video_delete_percentage = thresholdPen;
+}
+
+float DiskSpaceManager::getDeleteVideoThreshold() {
+    InfoL  << "getDeleteVideoThreshold " << video_delete_percentage << std::endl;
+    return video_delete_percentage;
 }
