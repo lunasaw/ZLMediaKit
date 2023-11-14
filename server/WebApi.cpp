@@ -1799,9 +1799,11 @@ void installWebApi() {
         CHECK_SECRET();
         CHECK_ARGS("threshold")
         float threshold = atof(allArgs["threshold"].c_str());
+        InfoL << "setStorageThreshold threshold " << threshold <<std::endl;
         std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/record";
-        
-        if(!DiskSpaceManager::GetCreate()->StartService(path, threshold, 3)){
+        DiskSpaceManager::GetCreate()->setDeleteVideoThreshold(threshold);
+        float thresholdMB = DiskSpaceManager::GetCreate()->getSystemDisk(path) * 1024 * threshold;
+        if(!DiskSpaceManager::GetCreate()->StartService(path, thresholdMB, 3)){
             val["code"] = -1;
             val["msg"] = "failed";
         }else{
@@ -1813,17 +1815,20 @@ void installWebApi() {
     api_regist("/index/api/getStorageSpace",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
-        double space = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
-        float threshold = DiskSpaceManager::GetCreate()->GetThreshold();
-        float disSpaceCapacity =  DiskSpaceManager::GetCreate()->getSystemDisk(path)  * 1024;//MB
-        if(space<0){
+
+        double videoStorageSpace = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
+        int threshold = DiskSpaceManager::GetCreate()->getDeleteVideoThreshold() *100  ;//百分比扩大100 倍
+        float diskTotalCapacity =  DiskSpaceManager::GetCreate()->getSystemDisk(path)  * 1024;//MB
+        float diskUsedCapacity = DiskSpaceManager::GetCreate()->getUsedDisSpace(path) *1024 ;//MB
+        if(videoStorageSpace < 0 ){
             val["code"] = -1;
             val["msg"] = "failed";
         }else{
             val["path"] = path;
-            val["space"] = std::to_string(space);
-            val["threshold"] = std::to_string(threshold);
-            val["disSpaceCapacity"] = std::to_string(disSpaceCapacity);
+            val["diskTotalCapacity"] = floor(diskTotalCapacity);
+            val["diskUsedCapacity"] = floor(diskUsedCapacity);
+            val["videoStorageSpace"] = floor(videoStorageSpace);
+            val["thresholdPercentage"] = threshold;
             val["msg"] = "success";
         }
         invoker(200, headerOut, val.toStyledString());
