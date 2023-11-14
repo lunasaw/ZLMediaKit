@@ -430,7 +430,8 @@ int start_main(int argc,char *argv[]) {
         std::shared_ptr<DiskSpaceManager> manager =  DiskSpaceManager ::GetCreate();
         std::string zlRecordPath = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/" + "record";
         float  currentFileCap = manager->getSystemDisk(zlRecordPath);//GB
-        manager->StartService(zlRecordPath,currentFileCap * 1024 * 0.7,0.92);//剩余总容量的10%就会启动清理文件
+        float thresholdPercentage = manager->getDeleteVideoThreshold();
+        manager->StartService(zlRecordPath,currentFileCap * 1024 * thresholdPercentage,0.92);//剩余总容量的10%就会启动清理文件
 
 
 #if !defined(_WIN32)
