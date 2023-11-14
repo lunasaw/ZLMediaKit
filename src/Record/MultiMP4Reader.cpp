@@ -169,14 +169,15 @@ bool MultiMP4Reader::readSample() {
                 frameFromPtr->setPTS(_last_pts/_speed);
                 frameFromPtr->setDTS(_last_dts/_speed);
             }
-//            TraceL << "oldDts:" << oldDts
-//                   << ",inputDts:" << frame->dts()
-//                   << ",seek:"  << _seek_to
-//                   << ",capture:" << _capture_dts
-//                   << ",_last_dts:" << _last_dts
-//                   << ",_capture_dts:" << _capture_dts
-//                   << ",isKeyFrame:" << frame->keyFrame()
-//                   << ",now:" << getCurrentStamp();
+        //    TraceL << "oldDts:" << oldDts
+        //           << ",inputDts:" << frame->dts()
+        //           << ",seek:"  << _seek_to
+        //           << ",capture:" << _capture_dts
+        //           << ",_last_dts:" << _last_dts
+        //           << ",_capture_dts:" << _capture_dts
+        //           << ",isKeyFrame:" << frame->keyFrame()
+        //           << ",now:" << getCurrentStamp()
+        //           << ",codecId:" << frame->getCodecName();
             _muxer->inputFrame(frame);
         }
     }
