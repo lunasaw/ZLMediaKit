@@ -1645,9 +1645,9 @@ void installWebApi() {
                 if (search_mp4) {
                     if (!isDir) {
                         //我们只收集mp4文件，对文件夹不感兴趣
-                        
+                        // std::cout << "xxx:  " << record_path + "/" + relative_path << std::endl;
                         fileObj["file"] = relative_path;
-                        fileObj["size"] = std::to_string(File::fileSize(relative_path.c_str()));
+                        fileObj["size"] = std::to_string(File::fileSize((record_path + relative_path).c_str())/1024/1024);
                         paths.append(fileObj);
                     }
                 } else if (isDir && relative_path.find(period) == 0) {
