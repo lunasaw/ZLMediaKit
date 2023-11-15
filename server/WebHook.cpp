@@ -208,6 +208,9 @@ void do_http_hook(const string &url, const ArgsType &body, const function<void(c
             } else if (ticker.elapsedTime() > 500) {
                 // hook成功，但是hook响应超过500ms，打印警告日志
                 DebugL << "hook " << url << " " << ticker.elapsedTime() << "ms,success:" << bodyStr;
+            }else{
+                // 测试使用，正常发布关掉
+                DebugL << "hook " << url << " " << ticker.elapsedTime() << "ms,success:" << bodyStr;
             }
 
             if (func) {
