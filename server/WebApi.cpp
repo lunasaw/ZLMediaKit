@@ -1825,10 +1825,10 @@ void installWebApi() {
             val["msg"] = "failed";
         }else{
             val["path"] = path;
-            val["diskTotalCapacity"] = floor(diskTotalCapacity);
-            val["diskUsedCapacity"] = floor(diskUsedCapacity);
-            val["videoStorageSpace"] = floor(videoStorageSpace);
-            val["thresholdPercentage"] = threshold;
+            val["diskTotalCapacity"] = std::to_string((int)diskTotalCapacity);
+            val["diskUsedCapacity"] = std::to_string((int)diskUsedCapacity );
+            val["videoStorageSpace"] = std::to_string((int)videoStorageSpace );
+            val["thresholdPercentage"] = std::to_string(threshold );
             val["msg"] = "success";
         }
         invoker(200, headerOut, val.toStyledString());

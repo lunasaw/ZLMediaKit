@@ -174,7 +174,6 @@ float DiskSpaceManager::getSystemDisk(std::string recordPath) {
     //todo 根据recordPath 确认挂在分区的总大小
     const char * path = recordPath.c_str();
     struct statvfs buf ;
-//    std::cout << "getSystemDisk recordPath :  " <<recordPath<<std::endl;
     InfoL << "getSystemDisk" << recordPath <<std::endl;
     if(statvfs(path,&buf) == -1){
         //查不到挂在的路径分区大小
