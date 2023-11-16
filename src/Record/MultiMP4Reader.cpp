@@ -113,7 +113,12 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
         //callback 返回false 不在重复
         _timer = std::make_shared<Timer>(timer_sec, [strong_self]() {
                 lock_guard<recursive_mutex> lck(strong_self->_mtx);
-                return strong_self->readSample();
+                bool flag = strong_self->readSample();
+
+                if(!flag) {
+                    DebugL << "read sample:0";
+                }
+                return flag;
             }, _poller);
     } else {
         weak_ptr<MultiMP4Reader> weak_self = strong_self;
@@ -123,7 +128,11 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
                     return false;
                 }
                 lock_guard<recursive_mutex> lck(strong_self->_mtx);
-                return strong_self->readSample();
+                bool flag = strong_self->readSample();
+                if(!flag) {
+                    DebugL << "read sample:0";
+                }
+                return flag;
             }, _poller);
     }
 
@@ -145,6 +154,9 @@ bool MultiMP4Reader::readSample() {
     bool eof = false;
     uint64_t oldDts = 0;
     bool readSample = false;
+    if((_last_dts - _capture_dts) >= getCurrentStamp()) {
+        DebugL << "视频DTS大于系统时间，跳出循环";
+    }
     while (!eof && (_last_dts - _capture_dts) < getCurrentStamp()) {
         _read_mp4_item_done = false;
 
@@ -161,15 +173,17 @@ bool MultiMP4Reader::readSample() {
             _first_read = false;
             DebugL << "first read frame dts:" << oldDts << ",isKeyFrame:" << frame->keyFrame();
         }
-        _last_dts = frame->dts() - _seek_to + _capture_dts;
-        _last_pts = frame->pts() - _seek_to + _capture_pts;
+
+        _last_dts = fmax(frame->dts() - _seek_to, 0) + _capture_dts;
+        _last_pts = fmax(frame->pts() - _seek_to, 0) + _capture_pts;
+
         if (_muxer) {
             auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
             if(frameFromPtr) {
                 frameFromPtr->setPTS(_last_pts/_speed);
                 frameFromPtr->setDTS(_last_dts/_speed);
             }
-        //    TraceL << "oldDts:" << oldDts
+        //    DebugL << "oldDts:" << oldDts
         //           << ",inputDts:" << frame->dts()
         //           << ",seek:"  << _seek_to
         //           << ",capture:" << _capture_dts
