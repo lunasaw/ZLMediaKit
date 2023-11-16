@@ -88,8 +88,6 @@ void MultiMP4Reader::checkNeedSeek() {
     if(currTuple.startMs != 0) {
         TraceL << "seek to:" << currTuple.startMs;
         seekTo(currTuple.startMs);
-    } else {
-        _seek_to = 0;
     }
     _seek_ticker.resetTime(); //强制还原
 }
@@ -159,7 +157,6 @@ bool MultiMP4Reader::readSample() {
         DebugL << "视频DTS大于系统时间,跳出循环." 
                << ",_last_dts:" << std::to_string(_last_dts) 
                << ",_capture_dts:" << std::to_string(_capture_dts)
-               << ",_seek_to:" << _seek_to
                << ",offset:" << (_last_dts - _capture_dts)
                << ",current:" << getCurrentStamp();
     }
@@ -182,20 +179,20 @@ bool MultiMP4Reader::readSample() {
         }
         _read_sample_last_dts = frame->dts();
 
-        if(keyFrame || frame->keyFrame()) {
-//            DebugL << "readFrame keyFrame:" << frame->dts();
-        }
         oldDts = frame->dts();
         if(_first_read) {
             _first_read = false;
             DebugL << "first read frame dts:" << oldDts << ",isKeyFrame:" << frame->keyFrame();
+            if(frameFromPtr->dts() != 0) {
+                _first_read_dts = frameFromPtr->dts();
+                // frameFromPtr->setDTS(0);
+            }
         }
 
-        _last_dts = MAX(frame->dts() - _seek_to, 0) + _capture_dts;
-        _last_pts = MAX(frame->pts() - _seek_to, 0) + _capture_pts;
+        _last_dts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_dts;
+        _last_pts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_pts;
 
         if (_muxer) {
-           
             if(frameFromPtr) {
                 frameFromPtr->setPTS(_last_pts/_speed);
                 frameFromPtr->setDTS(_last_dts/_speed);
@@ -232,8 +229,9 @@ bool MultiMP4Reader::readSample() {
                << ",_file_repeat:" << _file_repeat
                << ", isPlayEof:" << isPlayEof();
 
-        _capture_seek_to += _seek_to;
         if(loadMP4(_currentIndex)) {
+            _first_read = true;
+            _first_read_dts = 0;
             _read_sample_last_dts = 0;
             checkNeedSeek();
             eof = false;
@@ -251,7 +249,6 @@ bool MultiMP4Reader::readSample() {
 
 void MultiMP4Reader::setCurrentStamp(uint32_t new_stamp) {
     auto old_stamp = getCurrentStamp();
-    _seek_to = new_stamp;
     _seek_ticker.resetTime();
 //    if (old_stamp != new_stamp && _muxer) {
 //        //时间轴未拖动时不操作
@@ -277,6 +274,7 @@ bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
         setCurrentStamp((uint32_t) stamp);
         return true;
     }
+    InfoL << "seek:" << stamp_seek;
     //搜索到下一帧关键帧
     bool keyFrame = false;
     bool eof = false;
