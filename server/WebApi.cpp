@@ -1800,7 +1800,8 @@ void installWebApi() {
         CHECK_ARGS("threshold")
         float threshold = atof(allArgs["threshold"].c_str());
         InfoL << "setStorageThreshold threshold " << threshold <<std::endl;
-        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/record";
+        std::string appName = mINI::Instance()[mediakit::Record::kAppName];
+        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/" + appName;
         DiskSpaceManager::GetCreate()->setDeleteVideoThreshold(threshold);
         float thresholdMB = DiskSpaceManager::GetCreate()->getSystemDisk(path) * 1024 * threshold;
         if(!DiskSpaceManager::GetCreate()->StartService(path, thresholdMB, 3)){
@@ -1815,6 +1816,7 @@ void installWebApi() {
     api_regist("/index/api/getStorageSpace",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
+        std::string appName = mINI::Instance()[mediakit::Record::kAppName];
 
         double videoStorageSpace = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
         int threshold = DiskSpaceManager::GetCreate()->getDeleteVideoThreshold() *100  ;//百分比扩大100 倍
@@ -1824,11 +1826,11 @@ void installWebApi() {
             val["code"] = -1;
             val["msg"] = "failed";
         }else{
-            val["path"] = path;
-            val["diskTotalCapacity"] = floor(diskTotalCapacity);
-            val["diskUsedCapacity"] = floor(diskUsedCapacity);
-            val["videoStorageSpace"] = floor(videoStorageSpace);
-            val["thresholdPercentage"] = threshold;
+            val["path"] = path+"/"+appName;
+            val["diskTotalCapacity"] = std::to_string((int)diskTotalCapacity);
+            val["diskUsedCapacity"] = std::to_string((int)diskUsedCapacity );
+            val["videoStorageSpace"] = std::to_string((int)videoStorageSpace );
+            val["thresholdPercentage"] = std::to_string(threshold );
             val["msg"] = "success";
         }
         invoker(200, headerOut, val.toStyledString());

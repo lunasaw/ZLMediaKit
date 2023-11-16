@@ -95,6 +95,8 @@ private:
     toolkit::Ticker _rtcp_send_ticker[2];
     //统计rtp并发送rtcp
     std::vector<RtcpContext::Ptr> _rtcp_context;
+
+    bool _first_send_pkt = true;
 };
 
 using RtspPusherImp = PusherImp<RtspPusher, PusherBase>;

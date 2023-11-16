@@ -151,6 +151,7 @@ void RtspPusher::onWholeRtspPacket(Parser &parser) {
 }
 
 void RtspPusher::onRtpPacket(const char *data, size_t len) {
+
     int trackIdx = -1;
     uint8_t interleaved = data[1];
     if (interleaved % 2 != 0) {
@@ -383,6 +384,8 @@ void RtspPusher::updateRtcpContext(const RtpPacket::Ptr &rtp){
 }
 
 void RtspPusher::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
+    
+    ssize_t sendSize = 0;
     switch (_rtp_type) {
         case Rtsp::RTP_TCP: {
             size_t i = 0;
@@ -393,7 +396,7 @@ void RtspPusher::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
                 if (++i == size) {
                     setSendFlushFlag(true);
                 }
-                send(rtp);
+                sendSize = send(rtp);
             });
             break;
         }
@@ -410,11 +413,15 @@ void RtspPusher::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
                     return;
                 }
 
-                pSock->send(std::make_shared<BufferRtp>(rtp, RtpPacket::kRtpTcpHeaderSize), nullptr, 0, ++i == size);
+                sendSize = pSock->send(std::make_shared<BufferRtp>(rtp, RtpPacket::kRtpTcpHeaderSize), nullptr, 0, ++i == size);
             });
             break;
         }
         default : break;
+    }
+    if(_first_send_pkt) {
+        DebugL <<" first pusher rtp pkt." << ",url:" << _url  << ", len:"<< std::to_string(sendSize);
+        _first_send_pkt = false;
     }
 }
 
@@ -561,6 +568,7 @@ void RtspPusher::sendRtspRequest(const string &cmd, const string &url,const StrC
     if (!sdp.empty()) {
         printer << sdp;
     }
+    DebugL << _content_base << ", printer:" << printer << " end!";
     SockSender::send(std::move(printer));
 }
 

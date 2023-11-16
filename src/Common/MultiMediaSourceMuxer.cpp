@@ -386,6 +386,9 @@ bool MultiMediaSourceMuxer::onTrackReady(const Track::Ptr &track) {
     }
     if (_rtsp) {
         ret = _rtsp->addTrack(track) ? true : ret;
+        if(track->getSdp() && track->getSdp()->getCodecId()) {
+            DebugL << _tuple.shortUrl() <<"rtsp add track:" << track->getSdp()->getCodecId() << ", ret:" << ret;
+        }
     }
     if (_ts) {
         ret = _ts->addTrack(track) ? true : ret;
