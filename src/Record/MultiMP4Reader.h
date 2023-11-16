@@ -77,6 +77,7 @@ private:
     uint64_t                                  _capture_pts = 0;
     uint32_t                                  _seek_to = 0;
     uint32_t                                  _capture_seek_to = 0;
+    uint32_t                                  _read_sample_last_dts;
     bool                                      _file_repeat = false;
     toolkit::Timer::Ptr                       _timer;
     std::recursive_mutex                      _mtx;

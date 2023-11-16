@@ -7,7 +7,7 @@
 #include "Thread/WorkThreadPool.h"
 #include "Util/File.h"
 
-#define MAX(x, y) (x>y?x:y)
+#define MAX(x,y) (x>y?x:y)
 
 using namespace std;
 using namespace toolkit;
@@ -155,10 +155,15 @@ bool MultiMP4Reader::readSample() {
     bool keyFrame = false;
     bool eof = false;
     uint64_t oldDts = 0;
-    bool readSample = false;
     if((_last_dts - _capture_dts) >= getCurrentStamp()) {
-        DebugL << "视频DTS大于系统时间，跳出循环";
+        DebugL << "视频DTS大于系统时间,跳出循环." 
+               << ",_last_dts:" << std::to_string(_last_dts) 
+               << ",_capture_dts:" << std::to_string(_capture_dts)
+               << ",_seek_to:" << _seek_to
+               << ",offset:" << (_last_dts - _capture_dts)
+               << ",current:" << getCurrentStamp();
     }
+    
     while (!eof && (_last_dts - _capture_dts) < getCurrentStamp()) {
         _read_mp4_item_done = false;
 
@@ -166,7 +171,17 @@ bool MultiMP4Reader::readSample() {
         if (!frame) {
             continue;
         }
-        readSample = true;
+        auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
+
+        if(!frameFromPtr) {
+            continue;
+        }
+        if(_read_sample_last_dts >= frame->dts()) {
+            frameFromPtr->setDTS(_read_sample_last_dts + 1);
+            frameFromPtr->setPTS(_read_sample_last_dts + 1);
+        }
+        _read_sample_last_dts = frame->dts();
+
         if(keyFrame || frame->keyFrame()) {
 //            DebugL << "readFrame keyFrame:" << frame->dts();
         }
@@ -180,7 +195,7 @@ bool MultiMP4Reader::readSample() {
         _last_pts = MAX(frame->pts() - _seek_to, 0) + _capture_pts;
 
         if (_muxer) {
-            auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
+           
             if(frameFromPtr) {
                 frameFromPtr->setPTS(_last_pts/_speed);
                 frameFromPtr->setDTS(_last_dts/_speed);
@@ -197,9 +212,6 @@ bool MultiMP4Reader::readSample() {
             _muxer->inputFrame(frame);
         }
     }
-//    if(!readSample) {
-//        TraceL << "readSample:" << readSample << ",_last_dts:" << _last_dts << ",getCurrentStamp()):" << getCurrentStamp() << ",_capture_seek_to:" << _capture_seek_to << ",seek:" << _seek_to;
-//    }
 
     MultiMediaSourceTuple tuple = _current_source_tuple;
     if(tuple.endMs != 0) {
@@ -222,6 +234,7 @@ bool MultiMP4Reader::readSample() {
 
         _capture_seek_to += _seek_to;
         if(loadMP4(_currentIndex)) {
+            _read_sample_last_dts = 0;
             checkNeedSeek();
             eof = false;
         } else {
@@ -311,13 +324,14 @@ bool MultiMP4Reader::speed(MediaSource &sender, float speed) {
         WarnL << "播放速度取值范围非法:" << speed;
         return false;
     }
-    //_seek_ticker重置，赋值_seek_to
-    setCurrentStamp(getCurrentStamp());
     // 设置播放速度后应该恢复播放
-    _paused = false;
     if (_speed == speed) {
         return true;
     }
+       _paused = false;
+     //_seek_ticker重置，赋值_seek_to
+    setCurrentStamp(getCurrentStamp());
+
     _speed = speed;
     TraceL << getOriginUrl(sender) << ",speed:" << speed;
     return true;
@@ -340,7 +354,7 @@ bool MultiMP4Reader::readNextSample() {
     if (_muxer) {
         _muxer->inputFrame(frame);
     }
-    setCurrentStamp(frame->dts());
+    // setCurrentStamp(frame->dts());
     TraceL << "readNextSample:" << frame->dts();
     return true;
 }
