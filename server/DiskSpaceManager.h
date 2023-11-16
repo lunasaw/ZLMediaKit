@@ -14,7 +14,7 @@
 #include "Poller/EventPoller.h"
 #include "Poller/Timer.h"
 
-#define DEBUG_RECORD_MANAGER
+// #define DEBUG_RECORD_MANAGER
 #define DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE  0.9f //默认固定开始清理的阈值，当硬盘容量在大于90%时启动清除
 class DiskSpaceManager
 {

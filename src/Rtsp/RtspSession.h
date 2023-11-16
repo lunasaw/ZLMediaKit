@@ -156,6 +156,7 @@ private:
     //是否已经触发on_play事件
     bool _emit_on_play = false;
     bool _send_sr_rtcp[2] = {true, true};
+    bool _send_first_pkt = true;
     //断连续推延时
     uint32_t _continue_push_ms = 0;
     //推流或拉流客户端采用的rtp传输方式
