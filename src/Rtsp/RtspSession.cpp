@@ -164,6 +164,10 @@ void RtspSession::onWholeRtspPacket(Parser &parser) {
 }
 
 void RtspSession::onRtpPacket(const char *data, size_t len) {
+     if(_send_first_pkt) {
+        DebugL << "first rtp packet:" << _content_base << ",dataSize:" << std::to_string(len);
+        _send_first_pkt = false;
+    }
     uint8_t interleaved = data[1];
     if (interleaved % 2 == 0) {
         auto track_idx = getTrackIndexByInterleaved(interleaved);
@@ -217,6 +221,7 @@ void RtspSession::handleReq_ANNOUNCE(const Parser &parser) {
 
     auto onRes = [this, parser, full_url](const string &err, const ProtocolOption &option) {
         if (!err.empty()) {
+            ErrorL << "rtsp response: 401 Unauthorized, url:" << full_url << ",err:" << err;
             sendRtspResponse("401 Unauthorized", { "Content-Type", "text/plain" }, err);
             shutdown(SockException(Err_shutdown, StrPrinter << "401 Unauthorized:" << err));
             return;
@@ -1097,6 +1102,8 @@ bool RtspSession::sendRtspResponse(const string &res_code, const StrCaseMap &hea
         printer << sdp;
     }
 //	DebugP(this) << printer;
+    DebugL << "rtsp response url:" << _content_base 
+                                  << ", printer:" << printer << " end!";
     return send(std::make_shared<BufferString>(std::move(printer))) > 0 ;
 }
 
