@@ -75,13 +75,13 @@ private:
     uint32_t                                  _last_pts = 0;
     uint64_t                                  _capture_dts = 0;
     uint64_t                                  _capture_pts = 0;
-    uint32_t                                  _seek_to = 0;
-    uint32_t                                  _capture_seek_to = 0;
-    uint32_t                                  _read_sample_last_dts;
-    bool                                      _file_repeat = false;
+    uint32_t                                  _read_sample_last_dts = 0;
+    bool                                      _first_read = true;
+    uint32_t                                  _first_read_dts = 0;
+    uint32_t                                  _file_repeat = false;
     toolkit::Timer::Ptr                       _timer;
     std::recursive_mutex                      _mtx;
-    bool                                      _first_read = true;
+    
 };
 
 }
