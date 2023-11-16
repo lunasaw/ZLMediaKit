@@ -423,6 +423,10 @@ void RtspPusher::sendRtpPacket(const RtspMediaSource::RingDataType &pkt) {
         DebugL <<" first pusher rtp pkt." << ",url:" << _url  << ", len:"<< std::to_string(sendSize);
         _first_send_pkt = false;
     }
+
+    if(sendSize <= 0) {
+        ErrorL <<" pusherrtp pkt fail." << ",url:" << _url  << ", len:"<< std::to_string(sendSize);
+    }
 }
 
 int RtspPusher::getTrackIndexByInterleaved(int interleaved) const {
