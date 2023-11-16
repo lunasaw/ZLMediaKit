@@ -7,6 +7,8 @@
 #include "Thread/WorkThreadPool.h"
 #include "Util/File.h"
 
+#define MAX(x, y) (x>y?x:y)
+
 using namespace std;
 using namespace toolkit;
 namespace mediakit {
@@ -174,8 +176,8 @@ bool MultiMP4Reader::readSample() {
             DebugL << "first read frame dts:" << oldDts << ",isKeyFrame:" << frame->keyFrame();
         }
 
-        _last_dts = fmax(frame->dts() - _seek_to, 0) + _capture_dts;
-        _last_pts = fmax(frame->pts() - _seek_to, 0) + _capture_pts;
+        _last_dts = MAX(frame->dts() - _seek_to, 0) + _capture_dts;
+        _last_pts = MAX(frame->pts() - _seek_to, 0) + _capture_pts;
 
         if (_muxer) {
             auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
