@@ -250,11 +250,7 @@ bool MultiMP4Reader::readSample() {
 void MultiMP4Reader::setCurrentStamp(uint32_t new_stamp) {
     auto old_stamp = getCurrentStamp();
     _seek_ticker.resetTime();
-//    if (old_stamp != new_stamp && _muxer) {
-//        //时间轴未拖动时不操作
-//        _muxer->setTimeStamp(new_stamp);
-//    }
-    DebugL << "MultiMP4Reader::setCurrentStamp:" << new_stamp;
+    TraceL << "MultiMP4Reader::setCurrentStamp:" << new_stamp;
 }
 
 bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
@@ -284,9 +280,6 @@ bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
             //文件读完了都未找到下一帧关键帧
             continue;
         }
-        // if(frame->dts() < stamp_seek) { //必须找到下一个关键帧
-        //     continue;
-        // }
         if (keyFrame || frame->keyFrame() || frame->configFrame()) {
             auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
             uint64_t currentDTS = frameFromPtr->dts();
