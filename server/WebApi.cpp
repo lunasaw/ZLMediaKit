@@ -1815,7 +1815,7 @@ void installWebApi() {
 
     api_regist("/index/api/getStorageSpace",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
-        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
+        std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath]+ "/" + "record";
         std::string appName = mINI::Instance()[mediakit::Record::kAppName];
 
         double videoStorageSpace = DiskSpaceManager::GetCreate()->GetStorageSpace(path);
