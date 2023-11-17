@@ -174,7 +174,7 @@ float DiskSpaceManager::getSystemDisk(std::string recordPath) {
     //todo 根据recordPath 确认挂在分区的总大小
     const char * path = recordPath.c_str();
     struct statvfs buf ;
-    InfoL << "getSystemDisk" << recordPath <<std::endl;
+    InfoL << recordPath <<std::endl;
     if(statvfs(path,&buf) == -1){
         //查不到挂在的路径分区大小
         perror("statbuf");
@@ -185,8 +185,8 @@ float DiskSpaceManager::getSystemDisk(std::string recordPath) {
     _fileCapacity = (double)buf.f_blocks * buf.f_frsize / (1024 * 1024 * 1024) ;
     _fileAvailable = (double)buf.f_bavail * buf.f_frsize / (1024 * 1024 * 1024);
     double usedDiskCap = (double)((buf.f_blocks - buf.f_bfree) * buf.f_frsize /( 1024 * 1024 * 1024) );
-    InfoL << "getSystemDisk _fileCapacity " << _fileCapacity  << ", _fileAvailable " <<_fileAvailable
-          << ",usedDiskCap " << usedDiskCap << std::endl;
+    InfoL<< "getSystemDisk _fileCapacity " << _fileCapacity  << "  GB, _fileAvailable " <<_fileAvailable
+          << " GB,usedDiskCap " << usedDiskCap <<" GB" << std::endl;
 #ifdef OFF
 
     std::cout << "File system capacity: " <<std::fixed << std::setprecision(2) << _fileCapacity << " GB" << std::endl;
@@ -212,7 +212,7 @@ float DiskSpaceManager::getAvailableDiskCap(std::string recordPath) {
 float DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
     const char * path = recordPath.c_str();
     struct statvfs buf ;
-    InfoL << "getUsedDisSpace recordPath" << recordPath <<std::endl;
+    InfoL << "getUsedDisSpace recordPath " << recordPath <<std::endl;
     if(statvfs(path,&buf) == -1){
         //查不到挂在的路径分区大小
         perror("statbuf");
@@ -221,16 +221,16 @@ float DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
     }
 
     float usedDiskSpace =  ((buf.f_blocks - buf.f_bfree) * buf.f_frsize /(1024*1024*1024) );
-    InfoL  << "usedDiskSpace " << usedDiskSpace << std::endl;
+    InfoL  << "usedDiskSpace  " << usedDiskSpace << std::endl;
     return usedDiskSpace;
 }
 
 void DiskSpaceManager::setDeleteVideoThreshold(float thresholdPen) {
-    InfoL  << "setDeleteVideoThreshold " << thresholdPen << std::endl;
+    InfoL  << thresholdPen << std::endl;
     video_delete_percentage = thresholdPen;
 }
 
 float DiskSpaceManager::getDeleteVideoThreshold() {
-    InfoL  << "getDeleteVideoThreshold " << video_delete_percentage << std::endl;
+    InfoL << video_delete_percentage << std::endl;
     return video_delete_percentage;
 }
