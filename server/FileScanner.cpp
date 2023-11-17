@@ -52,7 +52,10 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     std::string seq = " +";
     std::vector<std::string> start_time_ans;
     std::vector<std::string> end_time_ans;
-    
+    int hh;
+    int mm;
+    int ss;
+
     WarnL << "视频文件目录路径:"<<dir_path<<" 开始时间:"<<start_time<<" 结束时间:"<<end_time;
 
     start_time_ans = split(start_time, seq);
@@ -80,22 +83,28 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
             initFileInfo(fn, seq, diread->d_name);
             if(!fn->file_name.empty() && et->etime > fn->stime && st->stime < fn->etime) {
                 if(st->stime > fn->stime && st->stime < fn->etime) {
-                    int hh = stoi(fn->stime.substr(0,2));
-                    int mm = stoi(fn->stime.substr(2,2));
-                    int ss = stoi(fn->stime.substr(4,2));
+                    hh = stoi(fn->stime.substr(0,2));//起始时间
+                    mm = stoi(fn->stime.substr(2,2));
+                    ss = stoi(fn->stime.substr(4,2));
                     fn->start_shift = ((st->hh - hh) * 3600 + (st->mm - mm)*60 + (st->ss - ss)) * 1000;
                 }
                 
                 if(et->etime < fn->etime && et->etime > fn->stime) {
-                    int hh = stoi(fn->etime.substr(0,2));
-                    int mm = stoi(fn->etime.substr(2,2));
-                    int ss = stoi(fn->etime.substr(4,2));
+                    hh = stoi(fn->etime.substr(0,2));//结束时间
+                    mm = stoi(fn->etime.substr(2,2));
+                    ss = stoi(fn->etime.substr(4,2));
                     fn->end_shift = ((hh - et->hh) * 3600 + (mm - et->mm)*60 + (ss - et->ss)) * 1000;
+                    if(fn->start_shift >= fn->end_shift){
+                        int sth = stoi(fn->stime.substr(0,2));
+                        int stm = stoi(fn->stime.substr(2,2));
+                        int sts = stoi(fn->stime.substr(4,2));
+                        fn->end_shift = ((et->hh - sth) * 3600 + (et->mm - stm)*60 + (et->ss - sts)) * 1000;
+                    }
                 }
                 if(full_path.back() != '/')
                     full_path += '/';
                 fn->file_name = full_path + fn->file_name;
-                WarnL << "视频文件全路径为:"<<fn->file_name;
+                WarnL << "视频文件全路径为:"<<fn->file_name << " start_shift = " <<fn->start_shift << " end_shift = " <<fn->end_shift;
                 myfiles.push_back(fn);
             }
         }
