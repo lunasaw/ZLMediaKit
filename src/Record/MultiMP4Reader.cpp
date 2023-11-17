@@ -284,9 +284,9 @@ bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
             //文件读完了都未找到下一帧关键帧
             continue;
         }
-        if(frame->dts() < stamp_seek) { //必须找到下一个关键帧
-            continue;
-        }
+        // if(frame->dts() < stamp_seek) { //必须找到下一个关键帧
+        //     continue;
+        // }
         if (keyFrame || frame->keyFrame() || frame->configFrame()) {
             auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
             uint64_t currentDTS = frameFromPtr->dts();
