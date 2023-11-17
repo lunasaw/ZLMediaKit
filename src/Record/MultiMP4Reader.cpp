@@ -29,7 +29,7 @@ MultiMP4Reader::MultiMP4Reader(const std::string &vhost,
 }
 
 MultiMP4Reader::~MultiMP4Reader() {
-    TraceL << "MultiMP4Reader release done";
+    DebugL << "MultiMP4Reader release done";
 }
 
 bool MultiMP4Reader::loadMP4(int index) {
@@ -39,9 +39,9 @@ bool MultiMP4Reader::loadMP4(int index) {
     MultiMediaSourceTuple tuple = _file_path.at(index);
     _current_source_tuple = tuple;
     if(File::fileExist(tuple.path.c_str())) {
-        TraceL << "found path:" << tuple.path;
+        DebugL << "found path:" << tuple.path;
     } else {
-        TraceL << "not found path:" << tuple.path;
+        DebugL << "not found path:" << tuple.path;
         return false;
     }
     _demuxer = std::make_shared<MP4Demuxer>();
@@ -72,7 +72,7 @@ bool MultiMP4Reader::loadMP4(int index) {
 
     _currentIndex++;
     _read_mp4_item_done = true;
-    TraceL << "load mp4 done:" << tuple.path << ",duration:" << _demuxer->getDurationMS();
+    DebugL << "load mp4 done:" << tuple.path << ",duration:" << _demuxer->getDurationMS();
     return true;
 }
 
@@ -86,7 +86,7 @@ bool MultiMP4Reader::isPlayEof() {
 void MultiMP4Reader::checkNeedSeek() {
     MultiMediaSourceTuple currTuple = _current_source_tuple;
     if(currTuple.startMs != 0) {
-        TraceL << "seek to:" << currTuple.startMs;
+        DebugL << "seek to:" << currTuple.startMs;
         seekTo(currTuple.startMs);
     }
     _seek_ticker.resetTime(); //强制还原
@@ -220,12 +220,12 @@ bool MultiMP4Reader::readSample() {
 
     if(eof) {
         if(isPlayEof()) {
-            TraceL << "play eof.";
+            DebugL << "play eof.";
             return false;
         }
         _capture_dts = _last_dts;
         _capture_pts = _last_pts;
-        TraceL << "MultiMP4Reader readSample EOF."
+        DebugL << "MultiMP4Reader readSample EOF."
                << ",_file_repeat:" << _file_repeat
                << ", isPlayEof:" << isPlayEof();
 
@@ -250,7 +250,6 @@ bool MultiMP4Reader::readSample() {
 void MultiMP4Reader::setCurrentStamp(uint32_t new_stamp) {
     auto old_stamp = getCurrentStamp();
     _seek_ticker.resetTime();
-
     TraceL << "MultiMP4Reader::setCurrentStamp:" << new_stamp;
 }
 
@@ -307,7 +306,7 @@ bool MultiMP4Reader::pause(mediakit::MediaSource &sender, bool pause) {
     //_seek_ticker重新计时，不管是暂停还是seek都不影响总的播放进度
     setCurrentStamp(getCurrentStamp());
     _paused = pause;
-    TraceL << getOriginUrl(sender) << ",pause:" << pause;
+    DebugL << getOriginUrl(sender) << ",pause:" << pause;
     return true;
 }
 
@@ -325,14 +324,14 @@ bool MultiMP4Reader::speed(MediaSource &sender, float speed) {
     setCurrentStamp(getCurrentStamp());
 
     _speed = speed;
-    TraceL << getOriginUrl(sender) << ",speed:" << speed;
+    DebugL << getOriginUrl(sender) << ",speed:" << speed;
     return true;
 }
 
 bool MultiMP4Reader::seekTo(mediakit::MediaSource &sender, uint32_t stamp) {
     //拖动进度条后应该恢复播放
     pause(sender, false);
-    TraceL << getOriginUrl(sender) << ",stamp:" << stamp;
+    DebugL << getOriginUrl(sender) << ",stamp:" << stamp;
     return seekTo(stamp);
 }
 
@@ -347,7 +346,7 @@ bool MultiMP4Reader::readNextSample() {
         _muxer->inputFrame(frame);
     }
     // setCurrentStamp(frame->dts());
-    TraceL << "readNextSample:" << frame->dts();
+    DebugL << "readNextSample:" << frame->dts();
     return true;
 }
 
