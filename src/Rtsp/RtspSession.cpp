@@ -1102,8 +1102,8 @@ bool RtspSession::sendRtspResponse(const string &res_code, const StrCaseMap &hea
         printer << sdp;
     }
 //	DebugP(this) << printer;
-    DebugL << "rtsp response url:" << _content_base 
-                                  << ", printer:" << printer << " end!";
+    // DebugL << "rtsp response url:" << _content_base 
+    //                               << ", printer:" << printer << " end!";
     return send(std::make_shared<BufferString>(std::move(printer))) > 0 ;
 }
 

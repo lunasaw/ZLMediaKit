@@ -569,7 +569,7 @@ void RtspPusher::sendRtspRequest(const string &cmd, const string &url,const StrC
     if (!sdp.empty()) {
         printer << sdp;
     }
-    DebugL << _content_base << ", printer:" << printer << " end!";
+    // DebugL << _content_base << ", printer:" << printer << " end!";
     SockSender::send(std::move(printer));
 }
 
