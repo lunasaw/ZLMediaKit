@@ -30,13 +30,19 @@ void Scanner::initInfo(std::shared_ptr<Info>& fn, const std::string seq, const s
         fn->etime = strstream.str();
 }
 
-void Scanner::initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info) {
+bool Scanner::initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info,std::shared_ptr<Info> st,std::shared_ptr<Info> et) {
     std::vector<std::string> infos = split(info, seq);
     if(infos.size() < 2 || infos[0].empty())
-        return;
+        return false;
     fn->file_name = info;
     fn->stime = infos[0];
     fn->etime = infos[1];
+    if(fn->stime <= st->stime && fn->etime >= et->etime){
+        WarnL << "起始时间和结束时间在一个文件范围内!";
+        return true;
+    }else{
+        return false;
+    }
 }
 
 bool Scanner::time_compare_st(std::shared_ptr<Info> first, std::shared_ptr<Info> second) {
@@ -52,9 +58,13 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     std::string seq = " +";
     std::vector<std::string> start_time_ans;
     std::vector<std::string> end_time_ans;
-    int hh;
-    int mm;
-    int ss;
+    bool isOneFile;
+    int start_hh;
+    int start_mm;
+    int start_ss;
+    int end_hh;
+    int end_mm;
+    int end_ss;
 
     WarnL << "视频文件目录路径:"<<dir_path<<" 开始时间:"<<start_time<<" 结束时间:"<<end_time;
 
@@ -72,33 +82,31 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     std::shared_ptr<Info> st = std::make_shared<Info>();
     std::shared_ptr<Info> et = std::make_shared<Info>();
     seq = ":+";
-    initInfo(st, seq, start_time_ans[1], true);
-    initInfo(et, seq, end_time_ans[1], false);
+    initInfo(st, seq, start_time_ans[1], true);//st为起始时间
+    initInfo(et, seq, end_time_ans[1], false);//et为结束时间
         
     std::string full_path = dir_path.append("/" + start_time_ans[0]);
     seq = "[-.]+";
     if ((dir = opendir(full_path.data())) != nullptr) {
         while ((diread = readdir(dir)) != nullptr ) {
             std::shared_ptr<Info> fn = std::make_shared<Info>();
-            initFileInfo(fn, seq, diread->d_name);
-            if(!fn->file_name.empty() && et->etime > fn->stime && st->stime < fn->etime) {
+            isOneFile = initFileInfo(fn, seq, diread->d_name, st, et);
+            if(!fn->file_name.empty() && et->etime > fn->stime && st->stime < fn->etime) {//
                 if(st->stime > fn->stime && st->stime < fn->etime) {
-                    hh = stoi(fn->stime.substr(0,2));//起始时间
-                    mm = stoi(fn->stime.substr(2,2));
-                    ss = stoi(fn->stime.substr(4,2));
-                    fn->start_shift = ((st->hh - hh) * 3600 + (st->mm - mm)*60 + (st->ss - ss)) * 1000;
+                    start_hh = stoi(fn->stime.substr(0,2));//起始时间
+                    start_mm = stoi(fn->stime.substr(2,2));
+                    start_ss = stoi(fn->stime.substr(4,2));
+                    fn->start_shift = ((st->hh - start_hh) * 3600 + (st->mm - start_mm)*60 + (st->ss - start_ss)) * 1000;
                 }
                 
                 if(et->etime < fn->etime && et->etime > fn->stime) {
-                    hh = stoi(fn->etime.substr(0,2));//结束时间
-                    mm = stoi(fn->etime.substr(2,2));
-                    ss = stoi(fn->etime.substr(4,2));
-                    fn->end_shift = ((hh - et->hh) * 3600 + (mm - et->mm)*60 + (ss - et->ss)) * 1000;
-                    if(fn->start_shift >= fn->end_shift){
-                        int sth = stoi(fn->stime.substr(0,2));
-                        int stm = stoi(fn->stime.substr(2,2));
-                        int sts = stoi(fn->stime.substr(4,2));
-                        fn->end_shift = ((et->hh - sth) * 3600 + (et->mm - stm)*60 + (et->ss - sts)) * 1000;
+                    end_hh = stoi(fn->etime.substr(0,2));//结束时间
+                    end_mm = stoi(fn->etime.substr(2,2));
+                    end_ss = stoi(fn->etime.substr(4,2));
+                    fn->end_shift = ((end_hh - et->hh) * 3600 + (end_mm - et->mm)*60 + (end_ss - et->ss)) * 1000;
+
+                    if(isOneFile){
+                        fn->end_shift = ((et->hh - start_hh) * 3600 + (et->mm - start_mm)*60 + (et->ss - start_ss)) * 1000;
                     }
                 }
                 if(full_path.back() != '/')

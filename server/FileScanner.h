@@ -34,7 +34,7 @@ public:
     
     static std::vector<std::string> split(const std::string& input, const std::string& regex);
     static void initInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info, bool  isStart);
-    static void initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info);
+    static bool initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info,std::shared_ptr<Info> st,std::shared_ptr<Info> et);
     static bool time_compare_st(std::shared_ptr<Info> first, std::shared_ptr<Info> second);
     static std::vector<std::shared_ptr<Scanner::Info>> getMediaInfo(std::string dir_path, const std::string start_time, const std::string end_time);
     static std::vector<MultiMediaSourceTuple> getMST(std::string dir_path, const std::string start_time, const std::string end_time);
