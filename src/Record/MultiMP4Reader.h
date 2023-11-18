@@ -71,13 +71,13 @@ private:
     bool                                      _have_video = false;
     bool                                      _read_mp4_item_done = false;
     float                                     _speed = 1.0;
-    uint32_t                                  _last_dts = 0;
-    uint32_t                                  _last_pts = 0;
+    uint64_t                                  _last_dts = 0;
+    uint64_t                                  _last_pts = 0;
     uint64_t                                  _capture_dts = 0;
     uint64_t                                  _capture_pts = 0;
-    uint32_t                                  _read_sample_last_dts = 0;
+    uint64_t                                  _read_sample_last_dts = 0;
     bool                                      _first_read = true;
-    uint32_t                                  _first_read_dts = 0;
+    uint64_t                                  _first_read_dts = 0;
     uint32_t                                  _file_repeat = false;
     toolkit::Timer::Ptr                       _timer;
     std::recursive_mutex                      _mtx;

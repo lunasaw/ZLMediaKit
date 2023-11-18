@@ -15,20 +15,20 @@ struct MultiMediaSourceTuple {
         startMs = 0;
         endMs = 0;
     }
-    MultiMediaSourceTuple(std::string &filePath, uint32_t start, uint32_t end) {
+    MultiMediaSourceTuple(std::string &filePath, uint64_t start, uint64_t end) {
         path = filePath;
         startMs = start;
         endMs = end;
     }
-    MultiMediaSourceTuple(const char *filePath, uint32_t start, uint32_t end) {
+    MultiMediaSourceTuple(const char *filePath, uint64_t start, uint64_t end) {
         path = filePath;
         startMs = start;
         endMs = end;
     }
     ~MultiMediaSourceTuple() = default;
     std::string path;
-    uint32_t startMs;
-    uint32_t endMs;
+    uint64_t startMs;
+    uint64_t endMs;
 };
 }
 
