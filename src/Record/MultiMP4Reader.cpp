@@ -156,12 +156,13 @@ bool MultiMP4Reader::readSample() {
     bool keyFrame = false;
     bool eof = false;
     uint64_t oldDts = 0;
+    GET_CONFIG(uint32_t, sampleMS, Record::kSampleMS);
     if((_last_dts - _capture_dts) >= getCurrentStamp()) {
-        DebugL << "视频DTS大于系统时间,跳出循环." 
-               << ",_last_dts:" << std::to_string(_last_dts) 
-               << ",_capture_dts:" << std::to_string(_capture_dts)
-               << ",offset:" << (_last_dts - _capture_dts)
-               << ",current:" << getCurrentStamp();
+        DebugL << "警告: 帧间隔大于: " << sampleMS
+               << ", last_dts:" << _last_dts
+               << ", capture_dts:" << _capture_dts
+               << ", interval:" << _last_dts - _capture_dts
+               << ", current:" << getCurrentStamp();
     }
     
     while (!eof && (_last_dts - _capture_dts) < getCurrentStamp()) {
@@ -197,19 +198,17 @@ bool MultiMP4Reader::readSample() {
 
         if (_muxer) {
             if(frameFromPtr) {
-                // frameFromPtr->setPTS(_last_pts/_speed);
-                // frameFromPtr->setDTS(_last_dts/_speed);
-                frameFromPtr->setPTS(_last_pts);
-                frameFromPtr->setDTS(_last_dts);
+                frameFromPtr->setPTS(_last_pts/_speed);
+                frameFromPtr->setDTS(_last_dts/_speed);
             }
-           DebugL << "oldDts:" << oldDts
-                  << ",inputDts:" << frame->dts()
-                  << ",capture:" << _capture_dts
-                  << ",_last_dts:" << _last_dts
-                  << ",_capture_dts:" << _capture_dts
-                  << ",isKeyFrame:" << frame->keyFrame()
-                  << ",now:" << getCurrentStamp()
-                  << ",codecId:" << frame->getCodecName();
+        //    DebugL << "oldDts:" << oldDts
+        //           << ",inputDts:" << frame->dts()
+        //           << ",capture:" << _capture_dts
+        //           << ",_last_dts:" << _last_dts
+        //           << ",_capture_dts:" << _capture_dts
+        //           << ",isKeyFrame:" << frame->keyFrame()
+        //           << ",now:" << getCurrentStamp()
+        //           << ",codecId:" << frame->getCodecName();
             _muxer->inputFrame(frame);
         }
     }
@@ -349,7 +348,7 @@ bool MultiMP4Reader::readNextSample() {
     if (_muxer) {
         _muxer->inputFrame(frame);
     }
-    setCurrentStamp(frame->dts());
+    // setCurrentStamp(frame->dts());
     DebugL << "readNextSample:" << frame->dts();
     return true;
 }
