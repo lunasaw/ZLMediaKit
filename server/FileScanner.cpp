@@ -92,22 +92,18 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
             std::shared_ptr<Info> fn = std::make_shared<Info>();
             isOneFile = initFileInfo(fn, seq, diread->d_name, st, et);
             if(!fn->file_name.empty() && et->etime > fn->stime && st->stime < fn->etime) {//
-                if(st->stime > fn->stime && st->stime < fn->etime) {
-                    start_hh = stoi(fn->stime.substr(0,2));//起始时间
+                if(st->stime > fn->stime && st->stime < fn->etime) {//起始时间
+                    start_hh = stoi(fn->stime.substr(0,2));
                     start_mm = stoi(fn->stime.substr(2,2));
                     start_ss = stoi(fn->stime.substr(4,2));
                     fn->start_shift = ((st->hh - start_hh) * 3600 + (st->mm - start_mm)*60 + (st->ss - start_ss)) * 1000;
                 }
                 
-                if(et->etime < fn->etime && et->etime > fn->stime) {
-                    end_hh = stoi(fn->etime.substr(0,2));//结束时间
-                    end_mm = stoi(fn->etime.substr(2,2));
-                    end_ss = stoi(fn->etime.substr(4,2));
-                    fn->end_shift = ((end_hh - et->hh) * 3600 + (end_mm - et->mm)*60 + (end_ss - et->ss)) * 1000;
-
-                    if(isOneFile){
-                        fn->end_shift = ((et->hh - start_hh) * 3600 + (et->mm - start_mm)*60 + (et->ss - start_ss)) * 1000;
-                    }
+                if(et->etime < fn->etime && et->etime > fn->stime) {//结束时间
+                    end_hh = stoi(fn->stime.substr(0,2));
+                    end_mm = stoi(fn->stime.substr(2,2));
+                    end_ss = stoi(fn->stime.substr(4,2));
+                    fn->end_shift = ((et->hh - end_hh) * 3600 + (et->mm - end_mm)*60 + (et->ss - end_ss)) * 1000;
                 }
                 if(full_path.back() != '/')
                     full_path += '/';
