@@ -114,7 +114,7 @@ int domain(const std::string &filePath, const string &pushUrl) {
 
     auto poller = EventPollerPool::Instance().getPoller();
     //vhost/app/stream可以随便自己填，现在不限制app应用名了
-    createPusher(poller, findSubString(pushUrl.data(), nullptr, "://").substr(0, 4), DEFAULT_VHOST, "record", "stream", filePath, pushUrl);
+    createPusher(poller, findSubString(pushUrl.data(), nullptr, "://").substr(0, 4), DEFAULT_VHOST, "live", "test1", filePath, pushUrl);
     //设置退出信号处理函数
     static semaphore sem;
     signal(SIGINT, [](int) { sem.post(); });// 设置退出信号
@@ -127,8 +127,8 @@ int domain(const std::string &filePath, const string &pushUrl) {
 int main(int argc, char *argv[]) {
     //可以使用test_server生成的mp4文件
     //文件使用绝对路径，推流url支持rtsp和rtmp
-    return domain("/Users/hopeliao/workspace/WDianZLMediaKit/release/darwin/Debug/www/record/live/v12345-67890/2023-10-16/10-20-55-0.mp4",
-                  "rtsp://127.0.0.1/live/rtsp_push");
+    return domain("./www/record/live/test/2023-11-14/121823-122102.mp4",
+                  "rtsp://172.24.32.23:1554/live/stream");
 }
 
 

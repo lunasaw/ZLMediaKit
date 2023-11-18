@@ -17,11 +17,12 @@ MultiMP4Reader::MultiMP4Reader(const std::string &vhost,
                                const std::string &app,
                                const std::string &stream_id,
                                const std::vector<MultiMediaSourceTuple> &file_path,
-                               float speed) {
+                               float speed, std::function<void()> endCB) {
     _speed = speed;
     _tuple =  MediaTuple{vhost, app, stream_id};
     _poller = WorkThreadPool::Instance().getPoller();
     _file_path = file_path;
+    _end_CB = endCB;
     if (_tuple.stream.empty()) {
         return;
     }
@@ -117,6 +118,7 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
 
                 if(!flag) {
                     DebugL << "read sample:0";
+                    strong_self->_end_CB();
                 }
                 return flag;
             }, _poller);
@@ -131,6 +133,7 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
                 bool flag = strong_self->readSample();
                 if(!flag) {
                     DebugL << "read sample:0";
+                    strong_self->_end_CB();
                 }
                 return flag;
             }, _poller);
@@ -194,18 +197,19 @@ bool MultiMP4Reader::readSample() {
 
         if (_muxer) {
             if(frameFromPtr) {
-                frameFromPtr->setPTS(_last_pts/_speed);
-                frameFromPtr->setDTS(_last_dts/_speed);
+                // frameFromPtr->setPTS(_last_pts/_speed);
+                // frameFromPtr->setDTS(_last_dts/_speed);
+                frameFromPtr->setPTS(_last_pts);
+                frameFromPtr->setDTS(_last_dts);
             }
-        //    DebugL << "oldDts:" << oldDts
-        //           << ",inputDts:" << frame->dts()
-        //           << ",seek:"  << _seek_to
-        //           << ",capture:" << _capture_dts
-        //           << ",_last_dts:" << _last_dts
-        //           << ",_capture_dts:" << _capture_dts
-        //           << ",isKeyFrame:" << frame->keyFrame()
-        //           << ",now:" << getCurrentStamp()
-        //           << ",codecId:" << frame->getCodecName();
+           DebugL << "oldDts:" << oldDts
+                  << ",inputDts:" << frame->dts()
+                  << ",capture:" << _capture_dts
+                  << ",_last_dts:" << _last_dts
+                  << ",_capture_dts:" << _capture_dts
+                  << ",isKeyFrame:" << frame->keyFrame()
+                  << ",now:" << getCurrentStamp()
+                  << ",codecId:" << frame->getCodecName();
             _muxer->inputFrame(frame);
         }
     }
@@ -345,7 +349,7 @@ bool MultiMP4Reader::readNextSample() {
     if (_muxer) {
         _muxer->inputFrame(frame);
     }
-    // setCurrentStamp(frame->dts());
+    setCurrentStamp(frame->dts());
     DebugL << "readNextSample:" << frame->dts();
     return true;
 }

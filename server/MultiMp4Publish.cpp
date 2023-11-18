@@ -98,8 +98,14 @@ int MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
             const string &stream, 
             const std::vector<MultiMediaSourceTuple> &filePath, 
             const string &url){
- 
-    _src = MediaSource::createFromMultiMP4(_id, schema, vhost, app, stream, filePath, false, _speed);
+    
+    MultiMp4Publish* parentPtr = _parent;
+    std::string id = _id;
+    _src = MediaSource::createFromMultiMP4(_id, schema, vhost, app, stream, filePath, false, _speed, [this, parentPtr, id](){
+        DebugL << "End of streaming, Close Connection";
+        std::string msg;
+        parentPtr->deletePusher(id, msg);
+    });
     if (!_src) {
         ErrorL << "Multi MP4 source Create faild:" << filePath.size();
         return -1;
@@ -112,8 +118,6 @@ int MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
     //(*g_pusher)[Client::kRtpType] = Rtsp::RTP_UDP;
 
     //设置推流中断处理逻辑
-    MultiMp4Publish* parentPtr = _parent;
-    std::string id = _id;
     _pusher->setOnShutdown([parentPtr, id, poller, schema, vhost, app, stream, filePath, url](const SockException &ex) {
         WarnL << "Server connection is closed:" << ex.getErrCode() << " " << ex.what();
         //重新推流

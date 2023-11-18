@@ -645,14 +645,15 @@ MediaSource::Ptr MediaSource::createFromMultiMP4(const std::string id, const std
                                                 const std::string &app,
                                                 const std::string &stream,
                                                 const std::vector<MultiMediaSourceTuple> sourceTuple,
-                                                bool check_app, float speed) {
+                                                bool check_app, float speed,
+                                                std::function<void()> endCB) {
     GET_CONFIG(string, appName, Record::kAppName);
     if (check_app && app != appName) {
         return nullptr;
     }
 #ifdef ENABLE_MP4
     try {
-        auto reader = std::make_shared<MultiMP4Reader>(vhost, app, stream+id, sourceTuple, speed);
+        auto reader = std::make_shared<MultiMP4Reader>(vhost, app, stream+id, sourceTuple, speed, endCB);
         reader->startReadMP4();
         return MediaSource::find(schema, vhost, app, stream+id);
     } catch (std::exception &ex) {

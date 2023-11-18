@@ -46,7 +46,7 @@ private:
     public:
         Mp4Pusher(MultiMp4Publish* parent, std::string id, float speed):_parent(parent), _id(id), _speed(speed){}
         ~Mp4Pusher(){
-            _src->close(true);
+            if(_src) _src->close(true);
         }
 
         int Start(const EventPoller::Ptr &poller, 

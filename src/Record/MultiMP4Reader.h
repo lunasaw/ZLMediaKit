@@ -20,7 +20,7 @@ public:
     MultiMP4Reader(const std::string &vhost,
                    const std::string &app,
                    const std::string &stream_id,
-                   const std::vector<MultiMediaSourceTuple> &file_path, float speed);
+                   const std::vector<MultiMediaSourceTuple> &file_path, float speed, std::function<void()> endCB);
     ~MultiMP4Reader() override;
 
     /**
@@ -81,6 +81,7 @@ private:
     uint32_t                                  _file_repeat = false;
     toolkit::Timer::Ptr                       _timer;
     std::recursive_mutex                      _mtx;
+    std::function<void()>                     _end_CB;
     
 };
 
