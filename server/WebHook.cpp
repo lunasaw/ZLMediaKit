@@ -51,6 +51,7 @@ const string kOnServerKeepalive = HOOK_FIELD "on_server_keepalive";
 const string kOnSendRtpStopped = HOOK_FIELD "on_send_rtp_stopped";
 const string kOnRtpServerTimeout = HOOK_FIELD "on_rtp_server_timeout";
 const string kOnIPNotFound = HOOK_FIELD "on_ip_not_found";
+const string kOnDeleteFile = HOOK_FIELD "on_del_mp4";
 const string kAliveInterval = HOOK_FIELD "alive_interval";
 const string kRetry = HOOK_FIELD "retry";
 const string kRetryDelay = HOOK_FIELD "retry_delay";
@@ -77,6 +78,7 @@ static onceToken token([]() {
     mINI::Instance()[kOnSendRtpStopped] = "";
     mINI::Instance()[kOnRtpServerTimeout] = "";
     mINI::Instance()[kOnIPNotFound] = "";
+    mINI::Instance()[kOnDeleteFile] = "";
     mINI::Instance()[kAliveInterval] = 30.0;
     mINI::Instance()[kRetry] = 1;
     mINI::Instance()[kRetryDelay] = 3.0;
@@ -711,6 +713,21 @@ void installWebHook() {
         body["type"] = ping;
         do_http_hook(ip_not_found, body);
     });
+
+    NoticeCenter::Instance().addListener(&web_hook_tag, Broadcast::KBroadcastDeleteFile, [](KBroadcastDeleteFileArgs) {
+        GET_CONFIG(string, delete_file, Hook::kOnDeleteFile);
+        if (!hook_enable || delete_file.empty()) {
+            return;
+        }
+        ArgsType body;
+        body["app"] = app;
+        body["stream"] = stream;
+        body["paths"] = path;
+        body["fileName"] = file;
+        do_http_hook(delete_file, body);
+    });
+
+    
 
     // 汇报服务器重新启动
     reportServerStarted();

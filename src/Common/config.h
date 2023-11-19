@@ -112,6 +112,9 @@ extern const std::string kBroadcastRtpServerTimeout;
 extern const std::string KBroadcastIPNotFound;
 #define BroadcastIPNotFoundArgs const std::string &url, const std::string &app, const std::string &stream, const std::string &ip,int &ping
 
+extern const std::string KBroadcastDeleteFile;
+#define KBroadcastDeleteFileArgs const std::string &app, const std::string &stream, const std::string &path, const std::string &file
+
 #define ReloadConfigTag ((void *)(0xFF))
 #define RELOAD_KEY(arg, key)                                                                                           \
     do {                                                                                                               \

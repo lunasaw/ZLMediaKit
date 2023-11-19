@@ -2,6 +2,11 @@
 #include "Thread/WorkThreadPool.h"
 #include <sys/statvfs.h>
 #include <iomanip>
+#include <Common/config.h>
+#include <Util/NoticeCenter.h>
+
+using namespace toolkit;
+using namespace mediakit;
 
 DiskSpaceManager::DiskSpaceManager()
 {
@@ -116,16 +121,18 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
     std::string minFile;
     std::regex timestampPattern(R"(([0-9]{6})-([0-9]{6}))");
     
+    std::string appDirName;
+    std::string streamDirName;
     for (const auto& appDir : std::filesystem::directory_iterator(path)) {
         if (appDir.is_directory()) {
-            std::string appDirName = appDir.path().filename().string();
+            appDirName = appDir.path().filename().string();
             if (appDirName == "." || appDirName == "..") {
                 continue;
             }
             if(_removeEmptyDirectory(path +"/"+ appDirName)==0) continue;
             for (const auto& streamDir : std::filesystem::directory_iterator(appDir)) {
                 if (streamDir.is_directory()) {
-                    std::string streamDirName = streamDir.path().filename().string();
+                    streamDirName = streamDir.path().filename().string();
                     if (streamDirName == "." || streamDirName == "..") continue;
                     if(_removeEmptyDirectory(path +"/"+ appDirName+ "/" +streamDirName)==0) continue;
                     for (const auto& dateDir : std::filesystem::directory_iterator(streamDir)) {
@@ -163,6 +170,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
     // 删除日期和时间都最久远的文件
     if (!minTimestamp.empty()) {
         bool result  = std::filesystem::remove(std::filesystem::path(minDir) / (minFile + ".mp4"));
+        NOTICE_EMIT(KBroadcastDeleteFileArgs, Broadcast::KBroadcastDeleteFile, appDirName, streamDirName, minDir, minFile + ".mp4");
 #ifdef DEBUG_RECORD_MANAGER
         std::cout << "已删除日期和时间都最久远的文件：" << minDir << "/" << minFile << ".mp4"
                   << ",result"<<result << ", errno:" << strerror(errno)<<std::endl;
