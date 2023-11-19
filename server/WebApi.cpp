@@ -1662,6 +1662,38 @@ void installWebApi() {
         val["data"]["paths"] = paths;
     });
 
+
+    api_regist("/index/api/getMp4RecordSummary", [](API_ARGS_MAP){
+        CHECK_SECRET();
+        CHECK_ARGS("vhost", "app");
+        auto app_path = Recorder::getRecordAppPath(Recorder::type_mp4, allArgs["vhost"], allArgs["app"]);
+
+        Json::Value dirObj;
+        Json::Value data(arrayValue);
+        Json::Value paths(arrayValue);
+        // //这是筛选日期，获取文件夹列表
+        for (const auto& streamDir : std::filesystem::directory_iterator(app_path)) {
+            if (streamDir.is_directory()) {
+                std::string streamDirName = streamDir.path().filename().string();
+                if (streamDirName == "." || streamDirName == "..") continue;
+
+                Json::Value obj;
+                dirObj["stream"] = streamDirName;
+                
+                for (const auto& dateDir : std::filesystem::directory_iterator(streamDir)) {
+                    if (dateDir.is_directory()) {
+                        std::string dateDirName = dateDir.path().filename().string();
+                        paths.append(dateDirName);
+                    }
+                }
+                dirObj["paths"]=paths;
+            }
+
+            data.append(dirObj);
+        }
+        val["data"] = data;
+    });
+
     static auto responseSnap = [](const string &snap_path,
                                   const HttpSession::KeyValue &headerIn,
                                   const HttpSession::HttpResponseInvoker &invoker,

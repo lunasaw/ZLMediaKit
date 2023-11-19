@@ -79,6 +79,14 @@ public:
      */
     static std::shared_ptr<MediaSinkInterface> createRecorder(type type, const MediaTuple& tuple, const ProtocolOption &option);
 
+    /**
+     * 获取应用名app的路径
+     * @param type 固定MP4
+     * @param vhost 虚拟主机
+     * @param app 应用名
+    */
+    static std::string getRecordAppPath(type type, std::string vhost, const std::string& app);
+
 private:
     Recorder() = delete;
     ~Recorder() = delete;
