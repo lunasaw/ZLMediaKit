@@ -1668,6 +1668,12 @@ void installWebApi() {
         CHECK_ARGS("vhost", "app");
         auto app_path = Recorder::getRecordAppPath(Recorder::type_mp4, allArgs["vhost"], allArgs["app"]);
 
+        if(!std::filesystem::exists(app_path)  ){
+            InfoL << " app_path is empty " << app_path << std::endl;
+            val["code"] = -1;
+            val["msg"] = "failed, directory not exit";
+            return ;
+        }
         Json::Value dirObj;
         Json::Value data(arrayValue);
         Json::Value paths(arrayValue);
@@ -1690,6 +1696,8 @@ void installWebApi() {
             }
 
             data.append(dirObj);
+            paths.clear();
+            dirObj.clear();
         }
         val["data"] = data;
     });
