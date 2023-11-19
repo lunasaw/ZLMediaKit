@@ -223,20 +223,49 @@ float DiskSpaceManager::getAvailableDiskCap(std::string recordPath) {
     InfoL  << " _fileAvailable " <<_fileAvailable << std::endl;
     return _fileAvailable;
 }
-float DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
-    const char * path = recordPath.c_str();
-    struct statvfs buf ;
-    InfoL << "getUsedDisSpace recordPath " << recordPath <<std::endl;
-    if(statvfs(path,&buf) == -1){
-        //查不到挂在的路径分区大小
-        perror("statbuf");
-        InfoL << "getUsedDisSpace error :" << path <<std::endl;
-        return 0;
+int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
+    FILE *fp;
+    char buffer[1024];
+    InfoL  << "usedDiskSpace  " << recordPath << std::endl;
+    std::string path = recordPath;
+
+    //获取路径上的容量
+    std::string cmp_pre = "df -m ";
+    std::string cmd = cmp_pre + " " + path;
+    InfoL  <<  "cmd: " <<cmd <<std::endl;
+    fp = popen(cmd.c_str() , "r");
+    if (fp == NULL) {
+        printf("Failed to run command\n");
+        InfoL  <<  "Failed to run command " <<std::endl;
+        return 1;
+    }
+    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
+        InfoL  <<  "buffer " << buffer << std::endl;
     }
 
-    float usedDiskSpace =  (float)((buf.f_blocks - buf.f_bfree) * buf.f_frsize /(1024*1024*1024) );
-    InfoL  << "usedDiskSpace  " << usedDiskSpace << std::endl;
-    return usedDiskSpace;
+    pclose(fp);
+
+    //从读取出来的数据中读取 容量 字符串
+    std::stringstream used(buffer);
+    std::vector<std::string> usedVec;
+    std::string word;
+
+    while (used >> word) {
+        usedVec.push_back(word);
+    }
+    InfoL  << "used :" << usedVec[2]<< std::endl;
+
+    //使用正则表达式获取容量大小
+    std::regex reg("\\d+");
+    std::smatch match;
+    int currentUsed;
+    if (std::regex_search(usedVec[2], match, reg)) {
+        std::string num_str = match[0].str();
+        currentUsed = std::stoi(num_str);
+    }
+    std::cout << currentUsed << std::endl;
+    InfoL  << "currentUsed :" << currentUsed   <<  "  GB"<< std::endl;
+    return currentUsed;
 }
 
 void DiskSpaceManager::setDeleteVideoThreshold(float thresholdPen) {
