@@ -1664,42 +1664,34 @@ void installWebApi() {
 
 
     api_regist("/index/api/getMp4RecordSummary", [](API_ARGS_MAP){
-        // CHECK_SECRET();
-        // CHECK_ARGS("vhost", "app");
-        // auto tuple = MediaTuple{allArgs["vhost"], allArgs["app"], allArgs["stream"]};
-        // auto record_path = Recorder::getRecordPath(Recorder::type_mp4, tuple, allArgs["customized_path"]);
+        CHECK_SECRET();
+        CHECK_ARGS("vhost", "app");
+        auto app_path = Recorder::getRecordAppPath(Recorder::type_mp4, allArgs["vhost"], allArgs["app"]);
 
-        // //判断是获取mp4文件列表还是获取文件夹列表
-        // bool search_mp4 = period.size() == sizeof("2020-02-01") - 1;
-        // if (search_mp4) {
-        //     record_path = record_path + period + "/";
-        // }
-
-        // Json::Value fileObj;
-        // Json::Value paths(arrayValue);
+        Json::Value dirObj;
+        Json::Value data(arrayValue);
+        Json::Value paths(arrayValue);
         // //这是筛选日期，获取文件夹列表
-        // File::scanDir(record_path, [&](const string &path, bool isDir) {
-        //     auto pos = path.rfind('/');
-        //     if (pos != string::npos) {
-        //         string relative_path = path.substr(pos + 1);
-        //         if (search_mp4) {
-        //             if (!isDir) {
-        //                 //我们只收集mp4文件，对文件夹不感兴趣
-        //                 // std::cout << "xxx:  " << record_path + "/" + relative_path << std::endl;
-        //                 fileObj["file"] = relative_path;
-        //                 fileObj["size"] = std::to_string(File::fileSize((record_path + relative_path).c_str())/1024/1024);
-        //                 paths.append(fileObj);
-        //             }
-        //         } else if (isDir && relative_path.find(period) == 0) {
-        //             //匹配到对应日期的文件夹
-        //             paths.append(relative_path);
-        //         }
-        //     }
-        //     return true;
-        // }, false);
+        for (const auto& streamDir : std::filesystem::directory_iterator(app_path)) {
+            if (streamDir.is_directory()) {
+                std::string streamDirName = streamDir.path().filename().string();
+                if (streamDirName == "." || streamDirName == "..") continue;
 
-        // val["data"]["rootPath"] = record_path;
-        // val["data"]["paths"] = paths;
+                Json::Value obj;
+                dirObj["stream"] = streamDirName;
+                
+                for (const auto& dateDir : std::filesystem::directory_iterator(streamDir)) {
+                    if (dateDir.is_directory()) {
+                        std::string dateDirName = dateDir.path().filename().string();
+                        paths.append(dateDirName);
+                    }
+                }
+                dirObj["paths"]=paths;
+            }
+
+            data.append(dirObj);
+        }
+        val["data"] = data;
     });
 
     static auto responseSnap = [](const string &snap_path,

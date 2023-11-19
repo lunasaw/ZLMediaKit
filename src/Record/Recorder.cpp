@@ -73,6 +73,44 @@ string Recorder::getRecordPath(Recorder::type type, const MediaTuple& tuple, con
     }
 }
 
+std::string Recorder::getRecordAppPath(type type, std::string vhost, const string& app)
+{
+    GET_CONFIG(bool, enableVhost, General::kEnableVhost);
+    switch (type) {
+        case Recorder::type_hls: {
+            // GET_CONFIG(string, hlsPath, Protocol::kHlsSavePath);
+            // string m3u8FilePath;
+            // if (enableVhost) {
+            //     m3u8FilePath = tuple.shortUrl() + "/hls.m3u8";
+            // } else {
+            //     m3u8FilePath = tuple.app + "/" + tuple.stream + "/hls.m3u8";
+            // }
+            // //Here we use the customized file path.
+            // if (!customized_path.empty()) {
+            //     return File::absolutePath(m3u8FilePath, customized_path);
+            // }
+            // return File::absolutePath(m3u8FilePath, hlsPath);
+        }
+        case Recorder::type_mp4: {
+            GET_CONFIG(string, recordPath, Protocol::kMP4SavePath);
+            GET_CONFIG(string, recordAppName, Record::kAppName);
+            string mp4FilePath;
+            if (enableVhost) {
+                mp4FilePath = vhost + "/" + recordAppName + "/" + app + "/";
+            } else {
+                mp4FilePath = recordAppName + "/" + app + "/";
+            }
+            //Here we use the customized file path.
+            // if (!customized_path.empty()) {
+            //     return File::absolutePath(mp4FilePath, customized_path);
+            // }
+            return File::absolutePath(mp4FilePath, recordPath);
+        }
+        default:
+            return "";
+    }
+}
+
 std::shared_ptr<MediaSinkInterface> Recorder::createRecorder(type type, const MediaTuple& tuple, const ProtocolOption &option){
     switch (type) {
         case Recorder::type_hls: {
