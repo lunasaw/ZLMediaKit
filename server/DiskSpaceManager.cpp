@@ -123,7 +123,9 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
     
     std::string appDirName;
     std::string streamDirName;
+    std::string dateDirName;
     for (const auto& appDir : std::filesystem::directory_iterator(path)) {
+
         if (appDir.is_directory()) {
             appDirName = appDir.path().filename().string();
             if (appDirName == "." || appDirName == "..") {
@@ -137,7 +139,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                     if(_removeEmptyDirectory(path +"/"+ appDirName+ "/" +streamDirName)==0) continue;
                     for (const auto& dateDir : std::filesystem::directory_iterator(streamDir)) {
                         if (dateDir.is_directory()) {
-                            std::string dateDirName = dateDir.path().filename().string();
+                            dateDirName = dateDir.path().filename().string();
         //                  _removeHiddenFiles(path+"/"+ dirName+"/"+ subDirName);
                             if(_removeEmptyDirectory(path+"/"+ appDirName+"/"+ streamDirName + "/" + dateDirName)==0) continue;
         //                  printf("subDirName:%s\n", subDirName.c_str());
@@ -170,10 +172,14 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
     // 删除日期和时间都最久远的文件
     if (!minTimestamp.empty()) {
         bool result  = std::filesystem::remove(std::filesystem::path(minDir) / (minFile + ".mp4"));
-        NOTICE_EMIT(KBroadcastDeleteFileArgs, Broadcast::KBroadcastDeleteFile, appDirName, streamDirName, minDir, minFile + ".mp4");
+        if(result){
+            NOTICE_EMIT(KBroadcastDeleteFileArgs, Broadcast::KBroadcastDeleteFile, appDirName, streamDirName, dateDirName, minFile + ".mp4");
+        } else{
+            InfoL << "remove file failed " << strerror(errno) << std::endl;
+        }
 #ifdef DEBUG_RECORD_MANAGER
         std::cout << "已删除日期和时间都最久远的文件：" << minDir << "/" << minFile << ".mp4"
-                  << ",result"<<result << ", errno:" << strerror(errno)<<std::endl;
+                  << ",result:"<<result << ", errno:" << strerror(errno)<<std::endl;
 #endif
     }
 }
@@ -228,7 +234,7 @@ float DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
         return 0;
     }
 
-    float usedDiskSpace =  ((buf.f_blocks - buf.f_bfree) * buf.f_frsize /(1024*1024*1024) );
+    float usedDiskSpace =  (float)((buf.f_blocks - buf.f_bfree) * buf.f_frsize /(1024*1024*1024) );
     InfoL  << "usedDiskSpace  " << usedDiskSpace << std::endl;
     return usedDiskSpace;
 }
