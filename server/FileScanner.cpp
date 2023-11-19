@@ -213,34 +213,6 @@ std::vector<std::string> Scanner::getAllNediaInfo(std::string dir_path, const st
     return {};
 }
 
-bool Scanner::createFileForm(std::string folder_path) 
-{
-    bool ret = false;
-    for (const auto& entry : fs::directory_iterator(folder_path)) {
-        if (entry.is_directory()) {
-            std::vector<std::string> files;
-            for (const auto& file : fs::directory_iterator(entry.path())) {
-                if (file.is_regular_file()) {
-                    files.push_back(file.path().filename().string());
-                }
-            }
-            std::sort(files.begin(), files.end());
-            folder_map[entry.path().filename().string()] = files;
-            ret = true;
-        }
-    }
-
-    for (auto& folder_entry : folder_map)
-    {
-        std::cout << "Folder: " << folder_entry.first << std::endl;
-        for (auto& file_entry : folder_entry.second)
-        {
-            std::cout << "File: " << file_entry << std::endl;
-        }
-    }
-    return ret;
-}
-
 void Scanner::getInfo(const std::string start_time, const std::string end_time) 
 {
     std::string seq = " +";
@@ -379,22 +351,6 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     sort(myfiles.begin(), myfiles.end(), time_compare_st);
     return myfiles;
 }
-
-std::vector<MultiMediaSourceTuple> Scanner::getMST(const std::string start_time, const std::string end_time) 
-{
-    std::vector<std::shared_ptr<Info>> files;// = getMediaInfo(dir_path, start_time, end_time);
-    // getAllNediaInfo(dir_path, start_time, end_time);
-    std::vector<MultiMediaSourceTuple> vec = {};
-    for(auto file : files){
-        MultiMediaSourceTuple mst;
-        mst.path = file->file_name;
-        mst.startMs = file->start_shift;
-        mst.endMs = file->end_shift;
-        vec.push_back(mst);
-    }
-    return vec;
-}
-
 
 std::string IPAddress::getIP(const std::string &url) {
     std::regex ipRegex(R"((\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}))");
