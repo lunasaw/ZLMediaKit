@@ -91,13 +91,15 @@ bool operator ==(Date &x, Date &y)
     return false;
 }
 
-std::vector<std::string> Scanner::split(const std::string& input, const std::string& regex) {
+std::vector<std::string> Scanner::split(const std::string& input, const std::string& regex) 
+{
     std::regex re(regex);
     std::sregex_token_iterator first {input.begin(), input.end(), re, -1}, last;
     return {first, last};
 }
 
-void Scanner::initInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info, bool  isStart) {
+void Scanner::initInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info, bool  isStart) 
+{
     std::vector<std::string> infos = split(info, seq);
     std::stringstream strstream;
     
@@ -114,7 +116,8 @@ void Scanner::initInfo(std::shared_ptr<Info>& fn, const std::string seq, const s
         fn->etime = strstream.str();
 }
 
-bool Scanner::initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info,std::shared_ptr<Info> st,std::shared_ptr<Info> et) {
+bool Scanner::initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info,std::shared_ptr<Info> st,std::shared_ptr<Info> et) 
+{
     std::vector<std::string> infos = split(info, seq);
     if(infos.size() < 2 || infos[0].empty())
         return false;
@@ -130,13 +133,15 @@ bool Scanner::initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, con
     }
 }
 
-bool Scanner::time_compare_st(std::shared_ptr<Info> first, std::shared_ptr<Info> second) {
+static bool time_compare_st(std::shared_ptr<Scanner::Info> first, std::shared_ptr<Scanner::Info> second) 
+{
     if(first->stime.compare(second->stime) < 0)
         return true;
     return false;
 }
 
-int Scanner::calcShift(std::string time, int hour, int minute, int second) {
+int Scanner::calcShift(std::string time, int hour, int minute, int second) 
+{
     int h = 0;
     int m = 0;
     int s = 0;
@@ -148,7 +153,8 @@ int Scanner::calcShift(std::string time, int hour, int minute, int second) {
     return ((hour - h) * 3600 + (minute - m)*60 + (second - s)) * 1000;
 }
 
-void Scanner::genNameVec(std::string full_path, std::shared_ptr<Info>& fn, std::vector<std::shared_ptr<Info>>& myfiles) {
+void Scanner::genNameVec(std::string full_path, std::shared_ptr<Info>& fn, std::vector<std::shared_ptr<Info>>& myfiles) 
+{
     if(full_path.back() != '/')
         full_path += '/';
         fn->file_name = full_path + fn->file_name;
@@ -156,7 +162,8 @@ void Scanner::genNameVec(std::string full_path, std::shared_ptr<Info>& fn, std::
         myfiles.push_back(fn);  
 }
 
-std::vector<std::string> Scanner::getAllNediaInfo(std::string dir_path, const std::string start_time,const std::string end_time) {
+std::vector<std::string> Scanner::getAllNediaInfo(std::string dir_path, const std::string start_time,const std::string end_time) 
+{
     std::string seq = " +";
     std::vector<std::string> start_time_ans;
     std::vector<std::string> end_time_ans;
@@ -206,8 +213,9 @@ std::vector<std::string> Scanner::getAllNediaInfo(std::string dir_path, const st
     return {};
 }
 
-std::map<std::string, std::vector<std::string>>  Scanner::createFileForm(std::string folder_path) {
-    std::map<std::string, std::vector<std::string>> folder_map;
+bool Scanner::createFileForm(std::string folder_path) 
+{
+    bool ret = false;
     for (const auto& entry : fs::directory_iterator(folder_path)) {
         if (entry.is_directory()) {
             std::vector<std::string> files;
@@ -218,6 +226,7 @@ std::map<std::string, std::vector<std::string>>  Scanner::createFileForm(std::st
             }
             std::sort(files.begin(), files.end());
             folder_map[entry.path().filename().string()] = files;
+            ret = true;
         }
     }
 
@@ -229,11 +238,11 @@ std::map<std::string, std::vector<std::string>>  Scanner::createFileForm(std::st
             std::cout << "File: " << file_entry << std::endl;
         }
     }
-    return folder_map;
+    return ret;
 }
 
-void Scanner::getInfo(std::string folder_path,const std::string start_time, const std::string end_time) {
-    std::map<std::string, std::vector<std::string>> folder_map = createFileForm(folder_path);
+void Scanner::getInfo(const std::string start_time, const std::string end_time) 
+{
     std::string seq = " +";
     std::vector<std::string> start_time_ans;
     std::vector<std::string> end_time_ans;
@@ -241,7 +250,6 @@ void Scanner::getInfo(std::string folder_path,const std::string start_time, cons
     std::stringstream strstream;
     Date start_date;
     Date end_date;
-
 
     start_time_ans = split(start_time, seq);
     if(end_time != "\"\"") {
@@ -281,7 +289,8 @@ void Scanner::getInfo(std::string folder_path,const std::string start_time, cons
 
 }
 
-std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string dir_path, const std::string start_time, const std::string end_time) {
+std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string dir_path, const std::string start_time, const std::string end_time) 
+{
     DIR *dir;
     struct dirent *diread;
     std::vector<std::shared_ptr<Info>> myfiles;
@@ -371,9 +380,9 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
     return myfiles;
 }
 
-std::vector<MultiMediaSourceTuple> Scanner::getMST(std::string dir_path, const std::string start_time, const std::string end_time) {
+std::vector<MultiMediaSourceTuple> Scanner::getMST(const std::string start_time, const std::string end_time) 
+{
     std::vector<std::shared_ptr<Info>> files;// = getMediaInfo(dir_path, start_time, end_time);
-    getInfo(dir_path, start_time, end_time);
     // getAllNediaInfo(dir_path, start_time, end_time);
     std::vector<MultiMediaSourceTuple> vec = {};
     for(auto file : files){
