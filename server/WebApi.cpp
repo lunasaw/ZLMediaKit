@@ -1862,8 +1862,8 @@ void installWebApi() {
         double videoStorageSpace = DiskSpaceManager::GetCreate()->GetStorageSpace(path+"/"+appName);
         int threshold = DiskSpaceManager::GetCreate()->getDeleteVideoThreshold() *100  ;//百分比扩大100 倍
         float diskTotalCapacity =  DiskSpaceManager::GetCreate()->getSystemDisk(path+"/"+appName)  * 1024;//MB
-        float diskUsedCapacity = DiskSpaceManager::GetCreate()->getUsedDisSpace(path+"/"+appName)  ;//MB
-        if(videoStorageSpace < 0 ){
+        int diskUsedCapacity = DiskSpaceManager::GetCreate()->getUsedDisSpace(path+"/"+appName)  ;//MB
+        if(videoStorageSpace < 0 ||diskTotalCapacity <=0 || diskUsedCapacity <= 0 ){
             val["code"] = -1;
             val["msg"] = "failed";
         }else{

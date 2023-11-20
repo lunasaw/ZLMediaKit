@@ -125,7 +125,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
     std::string streamDirName;
     std::string dateDirName;
     for (const auto& appDir : std::filesystem::directory_iterator(path)) {
-
+        //判断 record/ 目录下面的文件夹
         if (appDir.is_directory()) {
             appDirName = appDir.path().filename().string();
             if (appDirName == "." || appDirName == "..") {
@@ -133,22 +133,26 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
             }
             if(_removeEmptyDirectory(path +"/"+ appDirName)==0) continue;
             for (const auto& streamDir : std::filesystem::directory_iterator(appDir)) {
+                //判断 record/onvif/ 层名字
                 if (streamDir.is_directory()) {
                     streamDirName = streamDir.path().filename().string();
                     if (streamDirName == "." || streamDirName == "..") continue;
                     if(_removeEmptyDirectory(path +"/"+ appDirName+ "/" +streamDirName)==0) continue;
                     for (const auto& dateDir : std::filesystem::directory_iterator(streamDir)) {
+                        //判断流名字 record/onvif/034a0002004bb2cb5ffd__D01_CH01_Main
                         if (dateDir.is_directory()) {
                             dateDirName = dateDir.path().filename().string();
         //                  _removeHiddenFiles(path+"/"+ dirName+"/"+ subDirName);
                             if(_removeEmptyDirectory(path+"/"+ appDirName+"/"+ streamDirName + "/" + dateDirName)==0) continue;
         //                  printf("subDirName:%s\n", subDirName.c_str());
+                            // 判断流名字 record/onvif/034a0002004bb2cb5ffd__D01_CH01_Main/2023-11-01
                             if (std::regex_match(dateDirName, std::regex("[0-9]{4}-[0-9]{2}-[0-9]{2}"))) {
                                 for (const auto& mp4File : std::filesystem::directory_iterator(dateDir)) {
                                     if (mp4File.is_regular_file()) {
                                         std::string fileName = mp4File.path().filename().string();
                                         std::smatch match;
         //                              printf("fileName:%s\n", fileName.c_str());
+                                        // 判断流名字 record/onvif/034a0002004bb2cb5ffd__D01_CH01_Main/2023-11-01/235954-000202.mp4
                                         if (std::regex_search(fileName, match, timestampPattern)) {
                                             std::string timestamp = dateDirName + match[0].str();
                                             std::string file = match[0].str();
@@ -254,17 +258,18 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
         usedVec.push_back(word);
     }
     InfoL  << "used :" << usedVec[2]<< std::endl;
-
-    //使用正则表达式获取容量大小
-    std::regex reg("\\d+");
-    std::smatch match;
     int currentUsed;
-    if (std::regex_search(usedVec[2], match, reg)) {
-        std::string num_str = match[0].str();
-        currentUsed = std::stoi(num_str);
-    }
-    std::cout << currentUsed << std::endl;
-    InfoL  << "currentUsed :" << currentUsed   <<  "  GB"<< std::endl;
+    currentUsed = atoi(usedVec[2].c_str());
+    //使用正则表达式获取容量大小
+//    std::regex reg("\\d+");
+//    std::smatch match;
+//    int currentUsed;
+//    if (std::regex_search(usedVec[2], match, reg)) {
+//        std::string num_str = match[0].str();
+//        currentUsed = std::stoi(num_str);
+//    }
+//    std::cout << currentUsed << std::endl;
+    InfoL  << "currentUsed :" << currentUsed   <<  "  MB"<< std::endl;
     return currentUsed;
 }
 
