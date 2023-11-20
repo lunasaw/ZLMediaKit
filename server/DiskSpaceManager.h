@@ -28,7 +28,7 @@ public:
     float GetThreshold() { return _thresholdMB; }
     float getSystemDisk(std::string recordPath);//MB
     float getAvailableDiskCap(std::string recordPath);
-    float getUsedDisSpace(std::string recordPath);
+    int getUsedDisSpace(std::string recordPath);
     void setDeleteVideoThreshold(float  thresholdPercentage);
     float getDeleteVideoThreshold();
 
