@@ -42,10 +42,6 @@
 /out/
 /Android/.idea/
 /Android/app/src/main/cpp/libs_export/
-/3rdpart/media-server/.idea/
-/3rdpart/media-server/.idea/
 /build/
-/3rdpart/media-server/.idea/
 /ios/
 /cmake-build-*
-/3rdpart/ZLToolKit/cmake-build-mq/
