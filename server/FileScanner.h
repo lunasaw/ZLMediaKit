@@ -18,8 +18,6 @@
 #include "Util/logger.h"
 #include "Record/MultiMediaSourceTuple.h"
 
-namespace fs = std::__fs::filesystem;
-
 namespace mediakit {
 
 class Scanner{
@@ -81,10 +79,10 @@ private:
     */
     bool createFileMap(std::string folder_path){
         bool ret = false;
-        for (const auto& entry : fs::directory_iterator(folder_path)) {
+        for (const auto& entry : std::filesystem::directory_iterator(folder_path)) {
             if (entry.is_directory()) {
                 std::vector<std::string> files;
-                for (const auto& file : fs::directory_iterator(entry.path())) {
+                for (const auto& file : std::filesystem::directory_iterator(entry.path())) {
                     if (file.is_regular_file()) {
                         files.push_back(file.path().filename().string());
                     }
