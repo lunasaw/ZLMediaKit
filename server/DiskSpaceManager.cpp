@@ -241,7 +241,7 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
     if (fp == NULL) {
         printf("Failed to run command\n");
         InfoL  <<  "Failed to run command " <<std::endl;
-        return 1;
+        return 0;
     }
     while (fgets(buffer, sizeof(buffer), fp) != NULL) {
         InfoL  <<  "buffer " << buffer << std::endl;
