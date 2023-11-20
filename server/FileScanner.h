@@ -118,9 +118,10 @@ private:
         for(auto item=folder_map.begin(); item!=folder_map.end(); item++){
             if(playStartDate==item->first){
                 for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
-                    if((*file_itr)[0] == '.'){
-                        continue;
-                    }
+                    // if((*file_itr)[0] == '.'){
+                    //     continue;
+                    // }
+                    if(isHidden(*file_itr)) continue;
                     std::vector<std::string> infos = split(*file_itr, "[-.]+");
                     std::string fileStartTime = infos[0];
                     std::string fileEndTime = infos[1];
@@ -128,12 +129,11 @@ private:
                     int iFileStartTime = string2second2(fileStartTime);
                     int iFileEndTime = string2second2(fileEndTime);
 
-                    int interval = 0;
+
                     if(iFileEndTime<iFileStartTime){
                         // 说明此文件是跨天的，结束时间为第二天，开始时间为当前
                         iFileEndTime += 24*60*60; // 将0点转换为24点进行计算
                     }
-                    interval = iFileEndTime - iFileStartTime;
 
                     if(iPlayStartTime >=iFileStartTime && iPlayStartTime < iFileEndTime){
                         // 是要播放的第一个文件
@@ -163,18 +163,20 @@ private:
         for(auto item=folder_map.begin(); item!=folder_map.end(); item++){
             if(playStopDate > item->first && playStartDate < item->first ){
                 for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
-                    if((*file_itr)[0] == '.'){
-                        continue;
-                    }
+                    // if((*file_itr)[0] == '.'){
+                    //     continue;
+                    // }
+                    if(isHidden(*file_itr)) continue;
                     std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
                     DebugL << "匹配的文件 2: " << file_path;
                     playFiles.push_back(file_path);
                 }
             }else if(playStopDate==item->first || playStartDate == item->first){
                 for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
-                    if((*file_itr)[0] == '.'){
-                        continue;
-                    }
+                    // if((*file_itr)[0] == '.'){
+                    //     continue;
+                    // }
+                    if(isHidden(*file_itr)) continue;
                     std::vector<std::string> infos = split(*file_itr, "[-.]+");
                     std::string fileStartTime = infos[0];
                     std::string fileEndTime = infos[1];
@@ -182,12 +184,10 @@ private:
                     int iFileStartTime = string2second2(fileStartTime);
                     int iFileEndTime = string2second2(fileEndTime);
 
-                    int interval = 0;
                     if(iFileEndTime<iFileStartTime){
                         // 说明此文件是跨天的，结束时间为第二天，开始时间为当前
                         iFileEndTime += 24*60*60; // 将0点转换为24点进行计算
                     }
-                    interval = iFileEndTime - iFileStartTime;
 
                     if(iPlayStopTime > iFileEndTime){
                         // 是要播放文件
@@ -245,6 +245,15 @@ private:
             s = stoi(time.substr(4,2));
         }
         return (h) * 3600 + (m)*60 + (s);
+    }
+
+    bool isHidden(std::string filename){
+        std::ifstream file(filename, std::ios::binary | std::ios::ate);
+        std::streampos size = file.tellg();
+        std::filesystem::path filePath(filename);
+        bool isHidden = ((filePath.filename().string()[0] == '.') || (filePath.filename().string()[0] == '\\'));
+
+        return isHidden;
     }
 
 
