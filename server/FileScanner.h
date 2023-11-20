@@ -113,7 +113,7 @@ private:
         std::vector<std::string> start_time_ans = split(start_time, " +");
         playStartDate = start_time_ans[0];
         std::string hhmmss = start_time_ans[1];
-        int iPlayStartTime = string2second(hhmmss);
+        iPlayStartTime = string2second(hhmmss);
 
         for(auto item=folder_map.begin(); item!=folder_map.end(); item++){
             if(playStartDate==item->first){
@@ -190,16 +190,14 @@ private:
                         iFileEndTime += 24*60*60; // 将0点转换为24点进行计算
                     }
 
-                    if(iPlayStopTime > iFileEndTime){
+                    if(iPlayStartTime < iFileStartTime && iPlayStopTime <= iFileEndTime){
                         // 是要播放文件
                         std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
                         DebugL << "匹配的文件 3: " << file_path;
                         playFiles.push_back(file_path);
-                    }else if(iPlayStopTime > iFileStartTime && iPlayStopTime <= iFileEndTime){
-                        offset = iPlayStopTime - iFileStartTime;    // 应该播放到此文件的这个位置
-                        std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
-                        DebugL << "匹配的文件 4: " << file_path;
-                        playFiles.push_back(file_path);
+                        if(iPlayStopTime > iFileStartTime && iPlayStopTime <= iFileEndTime){
+                            offset = iPlayStopTime - iFileStartTime;    // 应该播放到此文件的这个位置
+                        }
                     }
                 }
             }
@@ -271,6 +269,7 @@ private:
     std::map<std::string/*YYMMDD*/, std::vector<std::string/*hhmmss-hhmmss.mp4*/>> folder_map;
     std::vector<std::string> playFiles;
     std::string playStartDate;
+    int iPlayStartTime;
 };
 
 }
