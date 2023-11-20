@@ -338,7 +338,7 @@ if(ENABLE_ASAN)
 endif()
 
 # TODO: 下载静态编译 jemalloc 后静态编译链接?
-set(DEP_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdpart/external-${CMAKE_SYSTEM_NAME})
+set(DEP_ROOT_DIR ${CMAKE_CURRENT_SOURCE_DIR}/3rdpart3/external-${CMAKE_SYSTEM_NAME})
 if(ENABLE_JEMALLOC_STATIC)
   if(NOT EXISTS ${DEP_ROOT_DIR})
     file(MAKE_DIRECTORY ${DEP_ROOT_DIR})
@@ -450,9 +450,9 @@ endif()
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 # for assert.h
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdpart)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/3rdpart3)
 
-add_subdirectory(3rdpart)
+add_subdirectory(3rdpart3)
 
 add_subdirectory(src)
 
