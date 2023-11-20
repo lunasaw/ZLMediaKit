@@ -38,6 +38,7 @@
 #include "MultiMp4Publish.h"
 #include "FileScanner.h"
 #include "DiskSpaceManager.h"
+#include "IPAddress.h"
 #if defined(ENABLE_RTPPROXY)
 #include "Rtp/RtpServer.h"
 #endif
@@ -602,7 +603,7 @@ void webApiAddStreamProxy(const std::string &vhost, const std::string &app, cons
     int reconnect_count = 0;
     player->setOnReconnect([app, stream, reconnect_count, key](const std::string &url, int retry)mutable {
          reconnect_count = retry;
-         InfoL << "reconnect_count:" << reconnect_count;
+         InfoL << "reconnect_count:" << std::to_string(reconnect_count);
          if(reconnect_count == 2 || (reconnect_count != 0 && reconnect_count % 10 == 0)) {
              std::string ip = IPAddress::getIP(url);
              bool isIPReachable = IPAddress::isIPReachable(ip);
