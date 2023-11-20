@@ -135,7 +135,7 @@ private:
                         iFileEndTime += 24*60*60; // 将0点转换为24点进行计算
                     }
 
-                    if(iPlayStartTime >=iFileStartTime && iPlayStartTime < iFileEndTime){
+                    if((iPlayStartTime >=iFileStartTime && iPlayStartTime < iFileEndTime )|| (iPlayStartTime <= iFileStartTime)){
                         // 是要播放的第一个文件
                         offset = iPlayStartTime - iFileStartTime;    // 应该播放到此文件的这个位置
                         std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
