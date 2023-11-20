@@ -196,7 +196,7 @@ private:
                         DebugL << "匹配的文件 3: " << file_path;
                         playFiles.push_back(file_path);
                         if(iPlayStopTime > iFileStartTime && iPlayStopTime <= iFileEndTime){
-                            offset = iPlayStopTime - iFileStartTime;    // 应该播放到此文件的这个位置
+                            offset = iPlayStopTime - iFileStartTime;    // 应该播放到此文件的这个位置 
                         }
                     }
                 }
