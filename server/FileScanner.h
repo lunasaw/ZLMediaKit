@@ -118,7 +118,9 @@ private:
         for(auto item=folder_map.begin(); item!=folder_map.end(); item++){
             if(playStartDate==item->first){
                 for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
-                    
+                    if((*file_itr)[0] == '.'){
+                        continue;
+                    }
                     std::vector<std::string> infos = split(*file_itr, "[-.]+");
                     std::string fileStartTime = infos[0];
                     std::string fileEndTime = infos[1];
@@ -161,13 +163,18 @@ private:
         for(auto item=folder_map.begin(); item!=folder_map.end(); item++){
             if(playStopDate > item->first && playStartDate < item->first ){
                 for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
+                    if((*file_itr)[0] == '.'){
+                        continue;
+                    }
                     std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
                     DebugL << "匹配的文件 2: " << file_path;
                     playFiles.push_back(file_path);
                 }
             }else if(playStopDate==item->first || playStartDate == item->first){
                 for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
-                    
+                    if((*file_itr)[0] == '.'){
+                        continue;
+                    }
                     std::vector<std::string> infos = split(*file_itr, "[-.]+");
                     std::string fileStartTime = infos[0];
                     std::string fileEndTime = infos[1];
