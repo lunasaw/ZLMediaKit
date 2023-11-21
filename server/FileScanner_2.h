@@ -20,7 +20,6 @@
 #include "Record/MultiMediaSourceTuple.h"
 #include "Common/config.h"
 #include "Util/mini.h"
-#include <boost/filesystem.hpp>
 
 using namespace toolkit;
 namespace mediakit {
