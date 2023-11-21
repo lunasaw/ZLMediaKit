@@ -390,7 +390,7 @@ private:
     }
 
     bool isHidden(std::string filename){
-        if(filename.at(0) == ".") return true;
+        if(filename.at(0) == '.') return true;
         return false;
     }
 

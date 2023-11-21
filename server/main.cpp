@@ -452,7 +452,7 @@ int start_main(int argc,char *argv[]) {
 
 #ifndef DISABLE_MAIN
 int main(int argc,char *argv[]) {
-    return start_main(argc,argv);
+        return start_main(argc,argv);
 }
 #endif //DISABLE_MAIN
 
