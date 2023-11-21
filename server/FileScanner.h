@@ -390,12 +390,8 @@ private:
     }
 
     bool isHidden(std::string filename){
-        std::ifstream file(filename, std::ios::binary | std::ios::ate);
-        std::streampos size = file.tellg();
-        std::filesystem::path filePath(filename);
-        bool isHidden = ((filePath.filename().string()[0] == '.') || (filePath.filename().string()[0] == '\\'));
-
-        return isHidden;
+        if(filename.at(0) == ".") return true;
+        return false;
     }
 
 
