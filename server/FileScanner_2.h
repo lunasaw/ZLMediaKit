@@ -24,7 +24,7 @@
 using namespace toolkit;
 namespace mediakit {
 
-class Scanner{
+class FileScanner{
 public:
     typedef struct Info{
         std::string file_name;
@@ -403,7 +403,7 @@ protected:
     void genNameVec(std::string full_path, std::shared_ptr<Info>& fn, std::vector<std::shared_ptr<Info>>& myfiles);
     std::vector<std::string> getAllNediaInfo(std::string dir_path, const std::string start_time,const std::string end_time);
     void getInfo(const std::string start_time, const std::string end_time);
-    std::vector<std::shared_ptr<Scanner::Info>> getMediaInfo(std::string dir_path, const std::string start_time, const std::string end_time);
+    std::vector<std::shared_ptr<FileScanner::Info>> getMediaInfo(std::string dir_path, const std::string start_time, const std::string end_time);
 private:
     std::map<std::string/*YYMMDD*/, std::vector<std::string/*hhmmss-hhmmss.mp4*/>> folder_map;
     std::vector<std::string> playFiles;

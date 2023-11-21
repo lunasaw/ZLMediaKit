@@ -3,7 +3,7 @@
 //  Created by weidian on 2023/10/30.
 //
 
-#include "FileScanner.h"
+#include "FileScanner_2.h"
 #include <string>
 namespace mediakit {
 
@@ -91,14 +91,14 @@ bool operator ==(Date &x, Date &y)
     return false;
 }
 
-std::vector<std::string> Scanner::split(const std::string& input, const std::string& regex) 
+std::vector<std::string> FileScanner::split(const std::string& input, const std::string& regex) 
 {
     std::regex re(regex);
     std::sregex_token_iterator first {input.begin(), input.end(), re, -1}, last;
     return {first, last};
 }
 
-void Scanner::initInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info, bool  isStart) 
+void FileScanner::initInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info, bool  isStart) 
 {
     std::vector<std::string> infos = split(info, seq);
     std::stringstream strstream;
@@ -116,7 +116,7 @@ void Scanner::initInfo(std::shared_ptr<Info>& fn, const std::string seq, const s
         fn->etime = strstream.str();
 }
 
-bool Scanner::initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info,std::shared_ptr<Info> st,std::shared_ptr<Info> et) 
+bool FileScanner::initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info,std::shared_ptr<Info> st,std::shared_ptr<Info> et) 
 {
     std::vector<std::string> infos = split(info, seq);
     if(infos.size() < 2 || infos[0].empty())
@@ -133,14 +133,14 @@ bool Scanner::initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, con
     }
 }
 
-static bool time_compare_st(std::shared_ptr<Scanner::Info> first, std::shared_ptr<Scanner::Info> second) 
+static bool time_compare_st_2(std::shared_ptr<FileScanner::Info> first, std::shared_ptr<FileScanner::Info> second) 
 {
     if(first->stime.compare(second->stime) < 0)
         return true;
     return false;
 }
 
-int Scanner::calcShift(std::string time, int hour, int minute, int second) 
+int FileScanner::calcShift(std::string time, int hour, int minute, int second) 
 {
     int h = 0;
     int m = 0;
@@ -153,7 +153,7 @@ int Scanner::calcShift(std::string time, int hour, int minute, int second)
     return ((hour - h) * 3600 + (minute - m)*60 + (second - s)) * 1000;
 }
 
-void Scanner::genNameVec(std::string full_path, std::shared_ptr<Info>& fn, std::vector<std::shared_ptr<Info>>& myfiles) 
+void FileScanner::genNameVec(std::string full_path, std::shared_ptr<Info>& fn, std::vector<std::shared_ptr<Info>>& myfiles) 
 {
     if(full_path.back() != '/')
         full_path += '/';
@@ -162,7 +162,7 @@ void Scanner::genNameVec(std::string full_path, std::shared_ptr<Info>& fn, std::
         myfiles.push_back(fn);  
 }
 
-std::vector<std::string> Scanner::getAllNediaInfo(std::string dir_path, const std::string start_time,const std::string end_time) 
+std::vector<std::string> FileScanner::getAllNediaInfo(std::string dir_path, const std::string start_time,const std::string end_time) 
 {
     std::string seq = " +";
     std::vector<std::string> start_time_ans;
@@ -213,7 +213,7 @@ std::vector<std::string> Scanner::getAllNediaInfo(std::string dir_path, const st
     return {};
 }
 
-void Scanner::getInfo(const std::string start_time, const std::string end_time) 
+void FileScanner::getInfo(const std::string start_time, const std::string end_time) 
 {
     std::string seq = " +";
     std::vector<std::string> start_time_ans;
@@ -261,7 +261,7 @@ void Scanner::getInfo(const std::string start_time, const std::string end_time)
 
 }
 
-std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string dir_path, const std::string start_time, const std::string end_time) 
+std::vector<std::shared_ptr<FileScanner::Info>> FileScanner::getMediaInfo(std::string dir_path, const std::string start_time, const std::string end_time) 
 {
     DIR *dir;
     struct dirent *diread;
@@ -348,7 +348,7 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
         WarnL << "无法打开视频文件目录路径,路径为："<<full_path;
         return {};
     }
-    sort(myfiles.begin(), myfiles.end(), time_compare_st);
+    sort(myfiles.begin(), myfiles.end(), time_compare_st_2);
     return myfiles;
 }
 
