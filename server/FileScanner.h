@@ -17,7 +17,10 @@
 #include <filesystem>
 #include "Util/logger.h"
 #include "Record/MultiMediaSourceTuple.h"
+#include "Common/config.h"
+#include "Util/mini.h"
 
+using namespace toolkit;
 namespace mediakit {
 
 class Scanner{
@@ -65,8 +68,9 @@ public:
                 }
                 mst.path = *item;
                 vec.push_back(mst);
-                DebugL << "获取的文件: " <<  mst.path << ", 起始偏移: " << mst.startMs << ", 末尾偏移: " << mst.endMs;
             }
+            DebugL << "获取的第一个文件: " <<  files[0] <<", 起始偏移: "<< bOffset;
+            DebugL <<" 获取的最后一个文件："<<files[files.size() - 1] << ", 末尾偏移: " << eOffset;
         }
         return vec;
     }
@@ -108,12 +112,15 @@ private:
      * 找出第一个文件
      * 参数 start_time：开始时间
     */
-    std::vector<std::string>  getFirstFile(std::string folder_path, const std::string start_time/* YY-MM-DD hh:mm:ss */, uint64_t& offset) 
+    std::vector<std::string>  getFirstFile(std::string folder_path, const std::string start_time/* YY-MM-DD hh:mm:ss */, const std::string end_time/* YY-MM-DD hh:mm:ss */, uint64_t& offset) 
     {
         std::vector<std::string> start_time_ans = split(start_time, " +");
+        std::vector<std::string> end_time_ans = split(end_time, " +");
         playStartDate = start_time_ans[0];
         std::string hhmmss = start_time_ans[1];
         iPlayStartTime = string2second(hhmmss);
+        hhmmss = end_time_ans[1];
+        iPlayEndTime = string2second(hhmmss);
 
         for(auto item=folder_map.begin(); item!=folder_map.end(); item++){
             if(playStartDate==item->first){
@@ -135,11 +142,23 @@ private:
                         iFileEndTime += 24*60*60; // 将0点转换为24点进行计算
                     }
 
-                    if((iPlayStartTime >=iFileStartTime && iPlayStartTime < iFileEndTime ) || (iPlayStartTime <= iFileStartTime)){
+                    if((iPlayStartTime >=iFileStartTime && iPlayStartTime < iFileEndTime )){
                         // 是要播放的第一个文件
-                        offset = iPlayStartTime - iFileStartTime;    // 应该播放到此文件的这个位置
+                        if(iPlayStartTime > iFileStartTime){
+                            offset = iPlayStartTime - iFileStartTime;  // 应该播放到此文件的这个位置
+                        }
+
                         std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
                         DebugL << "匹配的文件 1: " << file_path;
+                        playFiles.push_back(file_path);
+                        return playFiles;
+                    } else if(iPlayStartTime < iFileStartTime){
+                        if(iPlayStartTime > iFileStartTime){
+                            offset = iPlayStartTime - iFileStartTime;  // 应该播放到此文件的这个位置
+                        }
+
+                        std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
+                        DebugL << "匹配的文件 2: " << file_path;
                         playFiles.push_back(file_path);
                         return playFiles;
                     }
@@ -148,7 +167,6 @@ private:
         }
         return playFiles;
     }
-
     /**
      * 获取下一个文件
      * 参数end_time: 结束时间，每次调用，都会判断是否到达结束时间
@@ -160,19 +178,17 @@ private:
 
         std::string hhmmss = end_time_ans[1];
         int iPlayStopTime = string2second(hhmmss);
+        std::string MP4MaxSecond = mINI::Instance()[mediakit::Protocol::kMP4MaxSecond];
+        int iPlayStopTimeEndFile = iPlayStopTime + atoi(MP4MaxSecond.c_str());
+
+        //todo 检查 起始和结束时间的正确性
 
         for(auto item=folder_map.begin(); item!=folder_map.end(); item++){
-            if(playStopDate > item->first && playStartDate < item->first ){
-                for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
-                    // if((*file_itr)[0] == '.'){
-                    //     continue;
-                    // }
-                    if(isHidden(*file_itr)) continue;
-                    std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
-                    DebugL << "匹配的文件 2: " << file_path;
-                    playFiles.push_back(file_path);
-                }
-            }else if(playStopDate==item->first || playStartDate == item->first){
+
+
+            //当天结束的
+             if(playStopDate==item->first  && playStartDate == item->first){
+                //请求只有当天
                 for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
                     // if((*file_itr)[0] == '.'){
                     //     continue;
@@ -190,16 +206,115 @@ private:
                         iFileEndTime += 24*60*60; // 将0点转换为24点进行计算
                     }
 
-                    if(iPlayStartTime < iFileStartTime && iPlayStopTime <= iFileEndTime){
-                        // 是要播放文件
+                    //文件开始时间 > 点播开始时间 && 文件结束的时间 < 点播结束的时间
+                    if(iPlayStartTime < iFileStartTime &&  iFileEndTime <= iPlayStopTimeEndFile){
+
+                        // 刷选到的文件是 起始
                         std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
-                        DebugL << "匹配的文件 3: " << file_path;
+//                        DebugL << "匹配的文件 3: " << file_path;
+                        if(playFiles.size() == 1 && file_path == playFiles[0] ){
+                            //去重
+                            DebugL << "匹配的文件 3 去重 : " << file_path ;
+                            //如果只有一个文件 就设置了 偏移 如果多个文件，偏移还会刷新
+                            offset = iPlayStopTime - iFileStartTime;
+                            continue;
+                        }
                         playFiles.push_back(file_path);
                         if(iPlayStopTime > iFileStartTime && iPlayStopTime <= iFileEndTime){
-                            offset = iPlayStopTime - iFileStartTime;    // 应该播放到此文件的这个位置 
+                            //播放的时间在文件内部
+                            offset = iPlayStopTime - iFileStartTime;    // 应该播放到此文件的这个位置
+                        } else if(iPlayStopTime > iFileEndTime){
+                            //播放的时间在文件外部
+                            offset = 0;
                         }
+                    } else if(iPlayStopTime > iFileStartTime && iPlayStopTime <= iFileEndTime) {
+//                        DebugL << "匹配的文件 3 .1 计算末尾文件时间偏移: "  <<iFileEndTime ;
+                        //点播时间在文件里面
+                        offset =  (iFileEndTime - iFileStartTime) - (iFileEndTime - iPlayStopTime);
                     }
                 }
+            } else{
+                //跨天 时间都不在的 文件夹
+                //如 点播2023-11-12~2023-11-15   则2023-11-12之前的 和 2023-11-15之后的都不处理
+                if(item->first < playStartDate || item->first > playStopDate){
+                    continue;
+                }
+
+                //跨天 点播开始那天
+                //如 点播2023-11-12~2023-11-15   此处处理2023-11-12
+                if(item->first  == playStartDate ){
+                    for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
+                        if(isHidden(*file_itr)) continue;
+                        std::vector<std::string> infos = split(*file_itr, "[-.]+");
+                        std::string fileStartTime = infos[0];
+                        std::string fileEndTime = infos[1];
+
+                        int iFileStartTime = string2second2(fileStartTime);
+
+                        //文件开始时间 > 点播开始时间 && 文件结束的时间 < 点播结束的时间
+                        if(iPlayStartTime < iFileStartTime ){
+                            // 刷选到的文件是 起始
+                            std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
+//                            DebugL << "匹配的文件 3: " << file_path;
+                            if(playFiles.size() == 1 && file_path == playFiles[0] ){
+                                //去重
+                                DebugL << "匹配的文件 3 去重 : " << file_path ;
+                                continue;
+                            }
+                            playFiles.push_back(file_path);
+                        }
+                    }
+                    continue;
+                }
+                //跨天 点播结束那天
+                //如 点播2023-11-12~2023-11-15   此处处理2023-11-15
+                if(item->first  == playStopDate ){
+
+                    for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
+
+                        if(isHidden(*file_itr)) continue;
+                        std::vector<std::string> infos = split(*file_itr, "[-.]+");
+                        std::string fileStartTime = infos[0];
+                        std::string fileEndTime = infos[1];
+
+                        int iFileStartTime = string2second2(fileStartTime);
+                        int iFileEndTime = string2second2(fileEndTime);
+
+                        if(iFileEndTime<iFileStartTime){
+                            // 说明此文件是跨天的，结束时间为第二天，开始时间为当前
+                            iFileEndTime += 24*60*60; // 将0点转换为24点进行计算
+                        }
+
+//                        DebugL << "匹配的文件 4.0: "  <<item->first << "   "<< iFileEndTime <<","<<iPlayStopTimeEndFile ;
+                        //文件开始时间 > 点播开始时间 && 文件结束的时间 < 点播结束的时间
+                        std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
+                        if(  iFileStartTime < iPlayStopTimeEndFile && iFileEndTime <iPlayStopTimeEndFile ) {
+                            //                            DebugL << "匹配的文件 4: " << file_path;
+                            playFiles.push_back(file_path);
+
+                            if (iPlayStopTime > iFileEndTime){
+                                    offset = 0;
+                            }else{
+                                offset = iPlayStopTime - iFileStartTime;
+                            }
+                        }
+
+                    }
+                    break;
+                 }
+
+                 //跨天 点播中间的
+                 //如 点播2023-11-12~2023-11-15   此处处理2023-11-13  2023-11-14的
+                for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
+                    // if((*file_itr)[0] == '.'){
+                    //     continue;
+                    // }
+                    if(isHidden(*file_itr)) continue;
+                    std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
+//                    DebugL << "匹配的文件 2: " << file_path;
+                    playFiles.push_back(file_path);
+                }
+
             }
         }
         return playFiles;
@@ -214,7 +329,7 @@ private:
         std::vector<std::string> files;
         std::string dateDirName;
         if(createFileMap(folder_path)){
-            files = getFirstFile(folder_path, start_time, bOffset);
+            files = getFirstFile(folder_path, start_time, end_time, bOffset);
             if(!files.empty()) {
                 files = fillFile(folder_path, end_time, eOffset);
             }
@@ -270,6 +385,7 @@ private:
     std::vector<std::string> playFiles;
     std::string playStartDate;
     int iPlayStartTime;
+    int iPlayEndTime;
 };
 
 }
