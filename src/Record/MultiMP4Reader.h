@@ -75,6 +75,7 @@ private:
     uint64_t                                  _last_pts = 0;
     uint64_t                                  _capture_dts = 0;
     uint64_t                                  _capture_pts = 0;
+    uint64_t                                  _read_sample_last_dts = 0;
     uint64_t                                  _read_sample_last_dts_v = 0;
     uint64_t                                  _read_sample_last_dts_a = 0;
     bool                                      _first_read = true;
