@@ -15,6 +15,7 @@
 #include <sstream>
 #include <algorithm>
 #include <filesystem>
+#include <stdexcept>
 #include "Util/logger.h"
 #include "Record/MultiMediaSourceTuple.h"
 
@@ -128,6 +129,8 @@ private:
 
                     int iFileStartTime = string2second2(fileStartTime);
                     int iFileEndTime = string2second2(fileEndTime);
+                    if(iFileStartTime < 0 || iFileEndTime < 0)
+                        return {};
 
 
                     if(iFileEndTime<iFileStartTime){
@@ -184,6 +187,8 @@ private:
 
                     int iFileStartTime = string2second2(fileStartTime);
                     int iFileEndTime = string2second2(fileEndTime);
+                    if(iFileStartTime < 0 || iFileEndTime < 0)
+                        return {};
 
                     if(iFileEndTime<iFileStartTime){
                         // 说明此文件是跨天的，结束时间为第二天，开始时间为当前
@@ -233,15 +238,38 @@ private:
         return total_seconds;
     } 
 
+     int safe_stoi(const std::string& str) {
+        DebugL<<"input time = "<<str;
+        try {
+            size_t pos;
+            int value = std::stoi(str, &pos);
+            if (pos < str.size()) {
+                throw std::invalid_argument("Invalid argument: " + str);
+            }
+            return value;
+        } catch (const std::out_of_range&) {
+            throw std::out_of_range("Out of range: " + str);
+        } catch (const std::invalid_argument&) {
+            throw std::invalid_argument("Invalid argument: " + str);
+        }
+    }
+
     int string2second2(std::string time) 
     {
         int h = 0;
         int m = 0;
         int s = 0;
+        std::regex pattern("[0-9]+");
+        if (!std::regex_match(time, pattern))
+        {
+            DebugL<<"input time error. time = "<<time;
+            return -1;
+        }
+
         if(!time.empty()){
-            h = stoi(time.substr(0,2));
-            m = stoi(time.substr(2,2));
-            s = stoi(time.substr(4,2));
+            h = safe_stoi(time.substr(0,2));
+            m = safe_stoi(time.substr(2,2));
+            s = safe_stoi(time.substr(4,2));
         }
         return (h) * 3600 + (m)*60 + (s);
     }
