@@ -177,21 +177,29 @@ bool MultiMP4Reader::readSample() {
         if(!frameFromPtr) {
             continue;
         }
-        if(frame->getTrackType() == TrackVideo) {
-            if(_read_sample_last_dts_v >= frame->dts()) {
-                frameFromPtr->setDTS(_read_sample_last_dts_v + 1);
-                frameFromPtr->setPTS(_read_sample_last_dts_v + 1);
-            }
-            _read_sample_last_dts_v = frame->dts();
-        }
 
-        if(frame->getTrackType() == TrackAudio) {
-            if(_read_sample_last_dts_a >= frame->dts()) {
-                frameFromPtr->setDTS(_read_sample_last_dts_a + 1);
-                frameFromPtr->setPTS(_read_sample_last_dts_a + 1);
-            }
-            _read_sample_last_dts_a = frame->dts();
+        if(_read_sample_last_dts >= frame->dts()) {
+            frameFromPtr->setDTS(_read_sample_last_dts + 1);
+            frameFromPtr->setPTS(_read_sample_last_dts + 1);
         }
+        _read_sample_last_dts = frame->dts();
+
+
+        // if(frame->getTrackType() == TrackVideo) {
+        //     if(_read_sample_last_dts_v >= frame->dts()) {
+        //         frameFromPtr->setDTS(_read_sample_last_dts_v + 1);
+        //         frameFromPtr->setPTS(_read_sample_last_dts_v + 1);
+        //     }
+        //     _read_sample_last_dts_v = frame->dts();
+        // }
+
+        // if(frame->getTrackType() == TrackAudio) {
+        //     if(_read_sample_last_dts_a >= frame->dts()) {
+        //         frameFromPtr->setDTS(_read_sample_last_dts_a + 1);
+        //         frameFromPtr->setPTS(_read_sample_last_dts_a + 1);
+        //     }
+        //     _read_sample_last_dts_a = frame->dts();
+        // }
 
         oldDts = frame->dts();
         if(_first_read) {
@@ -245,8 +253,9 @@ bool MultiMP4Reader::readSample() {
         if(loadMP4(_currentIndex)) {
             _first_read = true;
             _first_read_dts = 0;
-            _read_sample_last_dts_v = 0;
-            _read_sample_last_dts_a = 0;
+            // _read_sample_last_dts_v = 0;
+            // _read_sample_last_dts_a = 0;
+            _read_sample_last_dts = 0;
             checkNeedSeek();
             eof = false;
         } else {
