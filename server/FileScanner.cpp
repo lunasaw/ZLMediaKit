@@ -108,7 +108,7 @@ std::vector<std::shared_ptr<Scanner::Info>> Scanner::getMediaInfo(std::string di
                 if(full_path.back() != '/')
                     full_path += '/';
                 fn->file_name = full_path + fn->file_name;
-                WarnL << "视频文件全路径为:"<<fn->file_name << " start_shift = " <<fn->start_shift << " end_shift = " <<fn->end_shift;
+                // WarnL << "视频文件全路径为:"<<fn->file_name << " start_shift = " <<fn->start_shift << " end_shift = " <<fn->end_shift;
                 myfiles.push_back(fn);
             }
         }
