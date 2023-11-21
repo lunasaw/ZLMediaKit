@@ -1,4 +1,14 @@
 ﻿/*
+ * @Author: 威泰视信
+ * @Date: 2023-11-20 23:33:55
+ * @LastEditors: 威泰视信
+ * @LastEditTime: 2023-11-21 08:32:01
+ * @FilePath: /ZLMediaKit/src/Player/PlayerBase.cpp
+ * @Description: 
+ * 
+ * Copyright (c) 2023 by 威泰视信, All Rights Reserved. 
+ */
+/*
  * Copyright (c) 2016 The ZLMediaKit project authors. All Rights Reserved.
  *
  * This file is part of ZLMediaKit(https://github.com/xia-chu/ZLMediaKit).
@@ -68,7 +78,7 @@ PlayerBase::Ptr PlayerBase::createPlayer(const EventPoller::Ptr &in_poller, cons
 }
 
 PlayerBase::PlayerBase() {
-    this->mINI::operator[](Client::kTimeoutMS) = 10000;
+    this->mINI::operator[](Client::kTimeoutMS) = 5000;
     this->mINI::operator[](Client::kMediaTimeoutMS) = 10000;    //zlm 2023-10-26 
     this->mINI::operator[](Client::kBeatIntervalMS) = 5000;
     this->mINI::operator[](Client::kWaitTrackReady) = true;
