@@ -105,8 +105,9 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
         while (!_muxer->isAllTrackReady() && readNextSample());
         //注册后再切换OwnerPoller
         _muxer->setMediaListener(strong_self);
-        checkNeedSeek();
     }
+
+    checkNeedSeek();
 
     auto timer_sec = (sample_ms ? sample_ms : sampleMS) / 1000.0f;
     //启动定时器
