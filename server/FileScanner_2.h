@@ -36,7 +36,8 @@ public:
         int mm;
         int ss;
     }Info;
-
+    FileScanner();
+    ~FileScanner();
     /**
      * 获取播放文件列表
      * dir_path: 检索的路径
@@ -70,8 +71,9 @@ public:
                 mst.path = *item;
                 vec.push_back(mst);
             }
+            DebugL << "总文件数量: " <<  files.size();
             DebugL << "获取的第一个文件: " <<  files[0] <<", 起始偏移: "<< bOffset;
-            DebugL <<" 获取的最后一个文件："<<files[files.size() - 1] << ", 末尾偏移: " << eOffset;
+            DebugL <<"获取的最后一个文件："<<files[files.size() - 1] << ", 末尾偏移: " << eOffset;
         }
         return vec;
     }
@@ -115,8 +117,8 @@ private:
     */
     std::vector<std::string>  getFirstFile(std::string folder_path, const std::string start_time/* YY-MM-DD hh:mm:ss */, const std::string end_time/* YY-MM-DD hh:mm:ss */, uint64_t& offset) 
     {
-        std::vector<std::string> start_time_ans = split(start_time, " +");
-        std::vector<std::string> end_time_ans = split(end_time, " +");
+        std::vector<std::string> start_time_ans = split(start_time, start_and_end_pattern);
+        std::vector<std::string> end_time_ans = split(end_time, start_and_end_pattern);
         playStartDate = start_time_ans[0];
         std::string hhmmss = start_time_ans[1];
         iPlayStartTime = string2second(hhmmss);
@@ -374,8 +376,7 @@ private:
         int h = 0;
         int m = 0;
         int s = 0;
-        std::regex pattern("[0-9]+");
-        if (!std::regex_match(time, pattern))
+        if (!std::regex_match(time, file_tine_pattern))
         {
             DebugL<<"input time error. time = "<<time;
             return -1;
@@ -397,6 +398,7 @@ private:
 
 protected:
     std::vector<std::string> split(const std::string& input, const std::string& regex);
+    std::vector<std::string> split(const std::string& input,  const std::regex & regex);
     void initInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info, bool  isStart);
     bool initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info,std::shared_ptr<Info> st,std::shared_ptr<Info> et);
     int calcShift(std::string time, int hour, int minute, int second);
@@ -410,6 +412,8 @@ private:
     std::string playStartDate;
     int iPlayStartTime;
     int iPlayEndTime;
+    std::regex file_tine_pattern;
+    std::regex start_and_end_pattern;
 };
 
 }

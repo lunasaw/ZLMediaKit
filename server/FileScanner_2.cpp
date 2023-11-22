@@ -98,6 +98,12 @@ std::vector<std::string> FileScanner::split(const std::string& input, const std:
     return {first, last};
 }
 
+std::vector<std::string> FileScanner::split(const std::string& input, const std::regex & regex)
+{
+    std::sregex_token_iterator first {input.begin(), input.end(), regex, -1}, last;
+    return {first, last};
+}
+
 void FileScanner::initInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info, bool  isStart) 
 {
     std::vector<std::string> infos = split(info, seq);
@@ -350,6 +356,14 @@ std::vector<std::shared_ptr<FileScanner::Info>> FileScanner::getMediaInfo(std::s
     }
     sort(myfiles.begin(), myfiles.end(), time_compare_st_2);
     return myfiles;
+}
+FileScanner::FileScanner() {
+    WarnL << "FileScanner";
+    file_tine_pattern= std::regex("[0-9]+");
+    start_and_end_pattern = std::regex(" +");
+}
+FileScanner::~FileScanner() {
+    WarnL << "~FileScanner";
 }
 
 }
