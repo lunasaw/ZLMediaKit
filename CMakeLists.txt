@@ -67,7 +67,7 @@ option(USE_SOLUTION_FOLDERS "Enable solution dir supported" ON)
 ##############################################################################
 
 if("${CMAKE_BUILD_TYPE}" STREQUAL "")
-  set(CMAKE_BUILD_TYPE "RELEASE")
+  set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
 message(STATUS "编译类型: ${CMAKE_BUILD_TYPE}")
