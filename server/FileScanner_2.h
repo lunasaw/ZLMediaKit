@@ -117,8 +117,8 @@ private:
     */
     std::vector<std::string>  getFirstFile(std::string folder_path, const std::string start_time/* YY-MM-DD hh:mm:ss */, const std::string end_time/* YY-MM-DD hh:mm:ss */, uint64_t& offset) 
     {
-        std::vector<std::string> start_time_ans = split(start_time, start_and_end_pattern);
-        std::vector<std::string> end_time_ans = split(end_time, start_and_end_pattern);
+        std::vector<std::string> start_time_ans = split(start_time, re_vec[0]);//" +"
+        std::vector<std::string> end_time_ans = split(end_time, re_vec[0]);//" +"
         playStartDate = start_time_ans[0];
         std::string hhmmss = start_time_ans[1];
         iPlayStartTime = string2second(hhmmss);
@@ -132,7 +132,7 @@ private:
                     //     continue;
                     // }
                     if(isHidden(*file_itr)) continue;
-                    std::vector<std::string> infos = split(*file_itr, "[-.]+");
+                    std::vector<std::string> infos = split(*file_itr, re_vec[1]);//"[-.]+"
                     std::string fileStartTime = infos[0];
                     std::string fileEndTime = infos[1];
 
@@ -178,7 +178,7 @@ private:
     */
     std::vector<std::string> fillFile(std::string folder_path, const std::string end_time, uint64_t& offset) 
     {
-        std::vector<std::string> end_time_ans = split(end_time, " +");
+        std::vector<std::string> end_time_ans = split(end_time, re_vec[0]);//" +"
         std::string playStopDate = end_time_ans[0];
 
         std::string hhmmss = end_time_ans[1];
@@ -199,7 +199,7 @@ private:
                     //     continue;
                     // }
                     if(isHidden(*file_itr)) continue;
-                    std::vector<std::string> infos = split(*file_itr, "[-.]+");
+                    std::vector<std::string> infos = split(*file_itr, re_vec[1]);//"[-.]+"
                     std::string fileStartTime = infos[0];
                     std::string fileEndTime = infos[1];
 
@@ -252,7 +252,7 @@ private:
                 if(item->first  == playStartDate ){
                     for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
                         if(isHidden(*file_itr)) continue;
-                        std::vector<std::string> infos = split(*file_itr, "[-.]+");
+                        std::vector<std::string> infos = split(*file_itr, re_vec[1]);//"[-.]+"
                         std::string fileStartTime = infos[0];
                         std::string fileEndTime = infos[1];
 
@@ -280,7 +280,7 @@ private:
                     for(auto file_itr = item->second.begin(); file_itr!=item->second.end(); file_itr++){
 
                         if(isHidden(*file_itr)) continue;
-                        std::vector<std::string> infos = split(*file_itr, "[-.]+");
+                        std::vector<std::string> infos = split(*file_itr, re_vec[1]);//"[-.]+"
                         std::string fileStartTime = infos[0];
                         std::string fileEndTime = infos[1];
 
@@ -376,7 +376,7 @@ private:
         int h = 0;
         int m = 0;
         int s = 0;
-        if (!std::regex_match(time, file_tine_pattern))
+        if (!std::regex_match(time, re_vec[2]))//"[0-9]+"
         {
             DebugL<<"input time error. time = "<<time;
             return -1;
@@ -398,7 +398,7 @@ private:
 
 protected:
     std::vector<std::string> split(const std::string& input, const std::string& regex);
-    std::vector<std::string> split(const std::string& input,  const std::regex & regex);
+    std::vector<std::string> split(const std::string& input, const std::regex& regex);
     void initInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info, bool  isStart);
     bool initFileInfo(std::shared_ptr<Info>& fn, const std::string seq, const std::string info,std::shared_ptr<Info> st,std::shared_ptr<Info> et);
     int calcShift(std::string time, int hour, int minute, int second);
@@ -408,12 +408,11 @@ protected:
     std::vector<std::shared_ptr<FileScanner::Info>> getMediaInfo(std::string dir_path, const std::string start_time, const std::string end_time);
 private:
     std::map<std::string/*YYMMDD*/, std::vector<std::string/*hhmmss-hhmmss.mp4*/>> folder_map;
+    std::vector<std::regex> re_vec{std::regex(" +"),std::regex("[-.]+"),std::regex("[0-9]+")};
     std::vector<std::string> playFiles;
     std::string playStartDate;
     int iPlayStartTime;
     int iPlayEndTime;
-    std::regex file_tine_pattern;
-    std::regex start_and_end_pattern;
 };
 
 }

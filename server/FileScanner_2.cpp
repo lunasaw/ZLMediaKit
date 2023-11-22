@@ -357,10 +357,9 @@ std::vector<std::shared_ptr<FileScanner::Info>> FileScanner::getMediaInfo(std::s
     sort(myfiles.begin(), myfiles.end(), time_compare_st_2);
     return myfiles;
 }
+
 FileScanner::FileScanner() {
     WarnL << "FileScanner";
-    file_tine_pattern= std::regex("[0-9]+");
-    start_and_end_pattern = std::regex(" +");
 }
 FileScanner::~FileScanner() {
     WarnL << "~FileScanner";
