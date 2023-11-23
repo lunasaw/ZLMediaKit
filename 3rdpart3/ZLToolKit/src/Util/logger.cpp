@@ -157,10 +157,10 @@ const string &Logger::getName() const {
 
 ///////////////////LogContext///////////////////
 static inline const char *getFileName(const char *file) {
-    auto pos = strrchr(file, '/');
+    auto pos = strrchr(file, '.');
 #ifdef _WIN32
     if(!pos){
-        pos = strrchr(file, '\\');
+        pos = strrchr(file, '.');
     }
 #endif
     return pos ? pos + 1 : file;
@@ -474,7 +474,7 @@ static const auto s_second_per_day = 24 * 60 * 60;
 static string getLogFilePath(const string &dir, time_t second, int32_t index) {
     auto tm = getLocalTime(second);
     char buf[64];
-    snprintf(buf, sizeof(buf), "%d-%02d-%02d_%02d.log", 1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday, index);
+    snprintf(buf, sizeof(buf),"wd-zlmediakit.log.%d-%2d-%2d",1900 + tm.tm_year, 1 + tm.tm_mon,tm.tm_mday);
     return dir + buf;
 }
 
