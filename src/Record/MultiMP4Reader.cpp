@@ -258,7 +258,7 @@ bool MultiMP4Reader::readSample() {
             // _read_sample_last_dts_v = 0;
             // _read_sample_last_dts_a = 0;
             _read_sample_last_dts = 0;
-            checkNeedSeek();
+            // checkNeedSeek();
             eof = false;
         } else {
             eof = true;
@@ -308,7 +308,12 @@ bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
         if (keyFrame || frame->keyFrame() || frame->configFrame()) {
             auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
             uint64_t currentDTS = frameFromPtr->dts();
-     
+
+            if(frameFromPtr){
+                frameFromPtr->setPTS(0);
+                frameFromPtr->setDTS(0);
+            }
+
             //定位到key帧
             if (_muxer) {
                 // DebugL << "zzzlllmmm - " << "checkNeedSeek 0";
