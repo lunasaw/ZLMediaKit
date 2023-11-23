@@ -76,7 +76,7 @@ bool MediaSink::inputFrame(const Frame::Ptr &frame) {
     if (it == _track_map.end()) {
         return false;
     }
-//    TraceL << "MediaSink.inputFrame: " << frame->dts() << ", keyFrame :" << frame->keyFrame();
+//    TraceL << "MediaSink.inputFrame zzzlllmmm: " << frame->dts() << ", keyFrame :" << frame->keyFrame() << ",cFrame:" << frame->configFrame() << ", codec type:" << frame->getCodecName();
     //got frame
     it->second.second = true;
     auto ret = it->second.first->inputFrame(frame);

@@ -77,7 +77,9 @@ bool MP4Reader::readSample() {
         }
         _last_dts = frame->dts();
         if (_muxer) {
+            DebugL << " xxxxxxxxxxxx readSample 0";
             _muxer->inputFrame(frame);
+            DebugL << " xxxxxxxxxxxx readSample 1";
         }
     }
 
@@ -118,7 +120,9 @@ void MP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_repeat
     auto strong_self = shared_from_this();
     if (_muxer) {
         //一直读到所有track就绪为止
+        DebugL << " xxxxxxxxxxxx readNextSample 0";
         while (!_muxer->isAllTrackReady() && readNextSample());
+        DebugL << " xxxxxxxxxxxx readNextSample 1";
         //注册后再切换OwnerPoller
         _muxer->setMediaListener(strong_self);
     }

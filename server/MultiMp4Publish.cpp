@@ -119,7 +119,7 @@ int MultiMp4Publish::Mp4Pusher::Start(const EventPoller::Ptr &poller,
         parentPtr->deletePusher(id, msg);
     });
     if (!_src) {
-        ErrorL << "Multi MP4 source Create faild:" << filePath.size();
+        ErrorL << "Multi MP4 source Create faild: " << filePath.size();
         return -1;
     }
     DebugL << "Multi MP4 source Create success.";
