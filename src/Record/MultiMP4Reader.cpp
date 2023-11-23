@@ -305,6 +305,7 @@ bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
             //文件读完了都未找到下一帧关键帧
             continue;
         }
+        DebugL << "zzzlllmmm seekTo pts: " << frame->dts();
         if (keyFrame || frame->keyFrame() || frame->configFrame()) {
             auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
             uint64_t currentDTS = frameFromPtr->dts();
@@ -371,6 +372,7 @@ bool MultiMP4Reader::readNextSample() {
     if (!frame) {
         return false;
     }
+    DebugL << "zzzlllmmm readNextSample pts: " << frame->dts();
     if (_muxer) {
         // DebugL << "zzzlllmmm - " << "readNextSample 0";
         _muxer->inputFrame(frame);

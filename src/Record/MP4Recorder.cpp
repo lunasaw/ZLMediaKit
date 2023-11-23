@@ -137,7 +137,7 @@ bool MP4Recorder::inputFrame(const Frame::Ptr &frame) {
         struct tm *local = localtime(&now);
 
         auto duration = frame->dts() - _last_dts;
-        if (!_muxer || ((duration > _max_second * 1000) && (!_have_video || (_have_video && frame->keyFrame()))) || (local->tm_hour == 0 && local->tm_min == 0 && local->tm_sec == 0)) {
+        if (!_muxer || ((duration > _max_second * 1000) && (!_have_video || (_have_video && frame->keyFrame())))) {
             //成立条件
             // 1、_muxer为空
             // 2、到了切片时间，并且只有音频
