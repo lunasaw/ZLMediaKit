@@ -95,7 +95,7 @@ RtpPacket::Ptr RtpTrack::inputRtp(TrackType type, int sample_rate, uint8_t *ptr,
     data[3] = len & 0xFF;
     //拷贝rtp
     memcpy(&data[4], ptr, len);
-    if (true || _disable_ntp) {
+    if (_disable_ntp) {
         //不支持ntp时间戳，例如国标推流，那么直接使用rtp时间戳
         rtp->ntp_stamp = rtp->getStamp() * uint64_t(1000) / sample_rate;
     } else {
