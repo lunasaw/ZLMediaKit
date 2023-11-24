@@ -46,6 +46,9 @@ private:
     double _fileCapacity = 0.0 ; //GB
     double _fileAvailable = 0.0; //GB
     float video_delete_percentage = DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE;
+    std::vector<std::regex> fileDeleteRegexs {std::regex(R"(([0-9]{6})-([0-9]{6}))"),
+                                               std::regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")
+    };
 };
 
 

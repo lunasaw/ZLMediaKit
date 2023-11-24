@@ -119,11 +119,15 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
     std::string minDir;
     std::string minTimestamp;
     std::string minFile;
-    std::regex timestampPattern(R"(([0-9]{6})-([0-9]{6}))");
-    
+//    std::regex timestampPattern(R"(([0-9]{6})-([0-9]{6}))");
+    std::regex timestampPattern = fileDeleteRegexs[0];
+
     std::string appDirName;
     std::string streamDirName;
     std::string dateDirName;
+
+    std::string needDeleteDate;
+    std::string needDeleteStream;
     for (const auto& appDir : std::filesystem::directory_iterator(path)) {
         //判断 record/ 目录下面的文件夹
         if (appDir.is_directory()) {
@@ -146,7 +150,9 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                             if(_removeEmptyDirectory(path+"/"+ appDirName+"/"+ streamDirName + "/" + dateDirName)==0) continue;
         //                  printf("subDirName:%s\n", subDirName.c_str());
                             // 判断流名字 record/onvif/034a0002004bb2cb5ffd__D01_CH01_Main/2023-11-01
-                            if (std::regex_match(dateDirName, std::regex("[0-9]{4}-[0-9]{2}-[0-9]{2}"))) {
+
+//                            if (std::regex_match(dateDirName, std::regex("[0-9]{4}-[0-9]{2}-[0-9]{2}"))) {
+                            if (std::regex_match(dateDirName, fileDeleteRegexs[1])) {
                                 for (const auto& mp4File : std::filesystem::directory_iterator(dateDir)) {
                                     if (mp4File.is_regular_file()) {
                                         std::string fileName = mp4File.path().filename().string();
@@ -161,6 +167,8 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                                                 minTimestamp = timestamp;
                                                 minFile = file;
                                                 minDir = dateDir.path().string(); // 记录找到最旧文件的目录路径
+                                                needDeleteDate = dateDirName;
+                                                needDeleteStream = streamDirName;
                                             }
                                         }
                                     }
@@ -177,14 +185,12 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
     if (!minTimestamp.empty()) {
         bool result  = std::filesystem::remove(std::filesystem::path(minDir) / (minFile + ".mp4"));
         if(result){
-            NOTICE_EMIT(KBroadcastDeleteFileArgs, Broadcast::KBroadcastDeleteFile, appDirName, streamDirName, dateDirName, minFile + ".mp4");
+            NOTICE_EMIT(KBroadcastDeleteFileArgs, Broadcast::KBroadcastDeleteFile, appDirName, needDeleteStream, needDeleteDate, minFile + ".mp4");
+            InfoL << "已删除日期和时间都最久远的文件 "  << minDir << "/" << minFile << ".mp4"
+                  << ",result:"<<result << ", errno:" << strerror(errno);
         } else{
             InfoL << "remove file failed " << strerror(errno) << std::endl;
         }
-#ifdef DEBUG_RECORD_MANAGER
-        std::cout << "已删除日期和时间都最久远的文件：" << minDir << "/" << minFile << ".mp4"
-                  << ",result:"<<result << ", errno:" << strerror(errno)<<std::endl;
-#endif
     }
 }
 
