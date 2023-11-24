@@ -62,6 +62,7 @@ bool MultiMP4Reader::loadMP4(int index) {
         //读取mp4文件并流化时，不重复生成mp4/hls文件
         option.enable_mp4 = false;
         option.enable_hls = false;
+        option.modify_stamp = 2;
         _muxer = std::make_shared<MultiMediaSourceMuxer>(_tuple, 0, option);
 
         for (auto &track : tracks) {
