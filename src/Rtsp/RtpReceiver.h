@@ -212,7 +212,8 @@ public:
     RtpPacket::Ptr inputRtp(TrackType type, int sample_rate, uint8_t *ptr, size_t len);
     void setNtpStamp(uint32_t rtp_stamp, uint64_t ntp_stamp_ms);
     void setPayloadType(uint8_t pt);
-
+    bool first = true;
+    bool first_audio = true;
 protected:
     virtual void onRtpSorted(RtpPacket::Ptr rtp) {}
     virtual void onBeforeRtpSorted(const RtpPacket::Ptr &rtp) {}

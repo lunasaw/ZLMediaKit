@@ -46,7 +46,7 @@ bool MultiMP4Reader::loadMP4(int index) {
         return false;
     }
     _demuxer = std::make_shared<MP4Demuxer>();
-    _demuxer->openMP4(tuple.path);
+        _demuxer->openMP4(tuple.path);
 
     auto tracks = _demuxer->getTracks(false);
     if (tracks.empty()) {
@@ -102,11 +102,13 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
     GET_CONFIG(uint32_t, sampleMS, Record::kSampleMS);
     auto strong_self = shared_from_this();
     if (_muxer) {
+        
+        checkNeedSeek();
+
         //一直读到所有track就绪为止
         while (!_muxer->isAllTrackReady() && readNextSample());
         //注册后再切换OwnerPoller
         _muxer->setMediaListener(strong_self);
-        checkNeedSeek();
     }
 
     auto timer_sec = (sample_ms ? sample_ms : sampleMS) / 1000.0f;
@@ -158,15 +160,15 @@ bool MultiMP4Reader::readSample() {
     bool eof = false;
     uint64_t oldDts = 0;
     GET_CONFIG(uint32_t, sampleMS, Record::kSampleMS);
-    if((_last_dts - _capture_dts) >= getCurrentStamp()) {
+    if((_last_dts - _last_file_dts) >= getCurrentStamp()) {
         DebugL << "警告: 帧间隔大于: " << sampleMS
                << ", last_dts:" << _last_dts
-               << ", capture_dts:" << _capture_dts
-               << ", interval:" << _last_dts - _capture_dts
+               << ", capture_dts:" << _last_file_dts
+               << ", interval:" << _last_dts - _last_file_dts
                << ", current:" << getCurrentStamp();
     }
     
-    while (!eof && (_last_dts - _capture_dts) < getCurrentStamp()) {
+    while (!eof && (_last_dts - _last_file_dts) < getCurrentStamp()) {
         _read_mp4_item_done = false;
 
         auto frame = _demuxer->readFrame(keyFrame, eof);
@@ -179,12 +181,13 @@ bool MultiMP4Reader::readSample() {
             continue;
         }
 
+        // 防止时间戳回退
         if(_read_sample_last_dts >= frame->dts()) {
             frameFromPtr->setDTS(_read_sample_last_dts + 1);
             frameFromPtr->setPTS(_read_sample_last_dts + 1);
         }
         _read_sample_last_dts = frame->dts();
-
+        oldDts = frame->dts();
 
         // if(frame->getTrackType() == TrackVideo) {
         //     if(_read_sample_last_dts_v >= frame->dts()) {
@@ -201,34 +204,33 @@ bool MultiMP4Reader::readSample() {
         //     }
         //     _read_sample_last_dts_a = frame->dts();
         // }
+        
+        // if(_first_read) {
+        //     DebugL << "first read frame dts:" << oldDts << ",isKeyFrame:" << frame->keyFrame();
+        //     _first_read = false;
+            
+            
+        //     if(frameFromPtr->dts() != 0) {
+        //         _first_read_dts = frameFromPtr->dts();
+        //         // frameFromPtr->setDTS(0);
+        //     }
+        // }
 
-        oldDts = frame->dts();
-        if(_first_read) {
-            _first_read = false;
-            DebugL << "first read frame dts:" << oldDts << ",isKeyFrame:" << frame->keyFrame();
-            if(frameFromPtr->dts() != 0) {
-                _first_read_dts = frameFromPtr->dts();
-                // frameFromPtr->setDTS(0);
-            }
-        }
+        // _last_dts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_dts;
+        // _last_pts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_pts;
 
-        _last_dts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_dts;
-        _last_pts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_pts;
+        _last_dts = frameFromPtr->dts() + _last_file_dts;
+        _last_pts = frameFromPtr->dts() + _last_file_pts;
 
         if (_muxer) {
             if(frameFromPtr) {
                 frameFromPtr->setPTS(_last_pts/_speed);
                 frameFromPtr->setDTS(_last_dts/_speed);
             }
-        //    DebugL << "oldDts:" << oldDts
-        //           << ",inputDts:" << frame->dts()
-        //           << ",capture:" << _capture_dts
-        //           << ",_last_dts:" << _last_dts
-        //           << ",_capture_dts:" << _capture_dts
-        //           << ",isKeyFrame:" << frame->keyFrame()
-        //           << ",now:" << getCurrentStamp()
-        //           << ",codecId:" << frame->getCodecName();
+
+            // DebugL << "zzzlllmmm - " << "inputFrame 0";
             _muxer->inputFrame(frame);
+            // DebugL << "zzzlllmmm - " << "inputFrame 1";
         }
     }
 
@@ -245,19 +247,19 @@ bool MultiMP4Reader::readSample() {
             DebugL << "play eof.";
             return false;
         }
-        _capture_dts = _last_dts;
-        _capture_pts = _last_pts;
+        _last_file_dts = _last_dts;
+        _last_file_pts = _last_pts;
         DebugL << "MultiMP4Reader readSample EOF."
                << ",_file_repeat:" << _file_repeat
                << ", isPlayEof:" << isPlayEof();
 
         if(loadMP4(_currentIndex)) {
             _first_read = true;
-            _first_read_dts = 0;
+            // _first_read_dts = 0;
             // _read_sample_last_dts_v = 0;
             // _read_sample_last_dts_a = 0;
             _read_sample_last_dts = 0;
-            checkNeedSeek();
+            // checkNeedSeek();
             eof = false;
         } else {
             eof = true;
@@ -304,16 +306,21 @@ bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
             //文件读完了都未找到下一帧关键帧
             continue;
         }
+        DebugL << "zzzlllmmm seekTo pts: " << frame->dts();
         if (keyFrame || frame->keyFrame() || frame->configFrame()) {
             auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
             uint64_t currentDTS = frameFromPtr->dts();
-            if(frameFromPtr) {
+
+            if(frameFromPtr){
                 frameFromPtr->setPTS(0);
                 frameFromPtr->setDTS(0);
             }
+
             //定位到key帧
             if (_muxer) {
+                // DebugL << "zzzlllmmm - " << "checkNeedSeek 0";
                 _muxer->inputFrame(frame);
+                // DebugL << "zzzlllmmm - " << "checkNeedSeek 1";
             }
             //设置当前时间戳
             setCurrentStamp(currentDTS);
@@ -366,11 +373,14 @@ bool MultiMP4Reader::readNextSample() {
     if (!frame) {
         return false;
     }
+    DebugL << "zzzlllmmm readNextSample pts: " << frame->dts();
     if (_muxer) {
+        // DebugL << "zzzlllmmm - " << "readNextSample 0";
         _muxer->inputFrame(frame);
+        // DebugL << "zzzlllmmm - " << "readNextSample 1";
     }
-    // setCurrentStamp(frame->dts());
-    DebugL << "readNextSample:" << frame->dts();
+
+    setCurrentStamp(frame->dts());
     return true;
 }
 

@@ -102,6 +102,27 @@ RtpPacket::Ptr RtpTrack::inputRtp(TrackType type, int sample_rate, uint8_t *ptr,
         //设置ntp时间戳
         rtp->ntp_stamp = _ntp_stamp.getNtpStamp(rtp->getStamp(), sample_rate);
     }
+
+    if(type == TrackType::TrackAudio && first_audio){
+        InfoL << "TrackAudio ："  ;
+        InfoL << "_disable_ntp ：" << _disable_ntp ;
+        InfoL << "rtp->getStamp() ：" << rtp->getStamp() ;
+        InfoL << "sample_rate ：" << sample_rate ;
+        InfoL << "rtp->ntp_stamp ：" << rtp->ntp_stamp ;
+        first_audio = false;
+    }
+    if(type == TrackType::TrackVideo && first){
+        InfoL << "TrackVideo ："  ;
+        InfoL << "_disable_ntp ：" << _disable_ntp ;
+        InfoL << "rtp->getStamp() ：" << rtp->getStamp() ;
+        InfoL << "sample_rate ：" << sample_rate ;
+        InfoL << "rtp->ntp_stamp ：" << rtp->ntp_stamp ;
+
+        first = false;
+    }
+
+
+
     onBeforeRtpSorted(rtp);
     sortPacket(rtp->getSeq(), rtp);
     return rtp;

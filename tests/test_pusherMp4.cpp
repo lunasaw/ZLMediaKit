@@ -127,8 +127,8 @@ int domain(const std::string &filePath, const string &pushUrl) {
 int main(int argc, char *argv[]) {
     //可以使用test_server生成的mp4文件
     //文件使用绝对路径，推流url支持rtsp和rtmp
-    return domain("./www/record/live/test/2023-11-14/121823-122102.mp4",
-                  "rtsp://172.24.32.23:1554/live/stream");
+    return domain("./www/record/live/test/2023-11-23/000208-000408.mp4",
+                  "rtsp://127.0.0.1:1554/live/stream");
 }
 
 
