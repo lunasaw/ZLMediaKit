@@ -73,8 +73,8 @@ private:
     float                                     _speed = 1.0;
     uint64_t                                  _last_dts = 0;
     uint64_t                                  _last_pts = 0;
-    uint64_t                                  _last_file_dts = 0;
-    uint64_t                                  _last_file_pts = 0;
+    uint64_t                                  _capture_dts = 0;
+    uint64_t                                  _capture_pts = 0;
     uint64_t                                  _read_sample_last_dts = 0;
     uint64_t                                  _read_sample_last_dts_v = 0;
     uint64_t                                  _read_sample_last_dts_a = 0;
