@@ -158,13 +158,13 @@ bool MultiMP4Reader::readSample() {
     bool eof = false;
     uint64_t oldDts = 0;
     GET_CONFIG(uint32_t, sampleMS, Record::kSampleMS);
-    if((_last_dts - _capture_dts) >= getCurrentStamp()) {
-        DebugL << "警告: 帧间隔大于: " << sampleMS
-               << ", last_dts:" << _last_dts
-               << ", capture_dts:" << _capture_dts
-               << ", interval:" << _last_dts - _capture_dts
-               << ", current:" << getCurrentStamp();
-    }
+    // if((_last_dts - _capture_dts) >= getCurrentStamp()) {
+    //     DebugL << "警告: 帧间隔大于: " << sampleMS
+    //            << ", last_dts:" << _last_dts
+    //            << ", capture_dts:" << _capture_dts
+    //            << ", interval:" << _last_dts - _capture_dts
+    //            << ", current:" << getCurrentStamp();
+    // }
     
     while (!eof && _last_dts < getCurrentStamp()) {
         _read_mp4_item_done = false;
@@ -173,7 +173,7 @@ bool MultiMP4Reader::readSample() {
         if (!frame) {
             continue;
         }
-        _last_dts = frame->dts();
+        
         auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
 
         // if(!frameFromPtr) {
@@ -229,6 +229,7 @@ bool MultiMP4Reader::readSample() {
         }
 #endif
 
+        _last_dts = frame->dts();
         if (_muxer) {
             // if(frameFromPtr) {
             //     frameFromPtr->setPTS(_last_pts/_speed);
@@ -286,9 +287,18 @@ bool MultiMP4Reader::readSample() {
 }
 
 void MultiMP4Reader::setCurrentStamp(uint32_t new_stamp) {
+    // auto old_stamp = getCurrentStamp();
+    // _seek_ticker.resetTime();
+    // TraceL << "MultiMP4Reader::setCurrentStamp:" << new_stamp;
+
     auto old_stamp = getCurrentStamp();
+    _seek_to = new_stamp;
+    _last_dts = new_stamp;
     _seek_ticker.resetTime();
-    TraceL << "MultiMP4Reader::setCurrentStamp:" << new_stamp;
+    if (old_stamp != new_stamp && _muxer) {
+        //时间轴未拖动时不操作
+        _muxer->setTimeStamp(new_stamp);
+    }
 }
 
 bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
