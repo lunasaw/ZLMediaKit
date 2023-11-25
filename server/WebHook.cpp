@@ -212,7 +212,7 @@ void do_http_hook(const string &url, const ArgsType &body, const function<void(c
                 DebugL << "hook " << url << " " << ticker.elapsedTime() << "ms,success:" << bodyStr;
             }else{
                 // 测试使用，正常发布关掉
-                DebugL << "hook " << url << " " << ticker.elapsedTime() << "ms,success:" << bodyStr;
+                // DebugL << "hook " << url << " " << ticker.elapsedTime() << "ms,success:" << bodyStr;
             }
 
             if (func) {
