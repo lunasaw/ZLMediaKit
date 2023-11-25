@@ -173,7 +173,7 @@ bool MultiMP4Reader::readSample() {
             continue;
         }
         
-        auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
+        // auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
 
         // if(!frameFromPtr) {
         //     continue;
@@ -228,7 +228,7 @@ bool MultiMP4Reader::readSample() {
         }
 #endif
 
-        _last_dts = frame->dts();
+       
         if (_muxer) {
             // if(frameFromPtr) {
             //     frameFromPtr->setPTS(_last_pts/_speed);
@@ -243,7 +243,9 @@ bool MultiMP4Reader::readSample() {
         //           << ",now:" << getCurrentStamp()
         //           << ",codecId:" << frame->getCodecName();
             _muxer->inputFrame(frame);
+            _last_dts = _muxer->_current_stamp;
         }
+        
     }
 
     

@@ -134,6 +134,8 @@ public:
     const ProtocolOption &getOption() const;
     const MediaTuple &getMediaTuple() const;
     std::string shortUrl() const;
+    
+    int64_t _current_stamp = 0;
 
 protected:
     /////////////////////////////////MediaSink override/////////////////////////////////

@@ -501,6 +501,7 @@ bool MultiMediaSourceMuxer::onTrackFrame(const Frame::Ptr &frame_in) {
         // 时间戳不采用原始的绝对时间戳
         frame = std::make_shared<FrameStamp>(frame, _stamp[frame->getTrackType()], _option.modify_stamp);
     }
+    _current_stamp = frame->dts();
 
     bool ret = false;
     if (_rtmp) {
