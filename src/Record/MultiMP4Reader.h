@@ -78,8 +78,8 @@ private:
     uint64_t                                  _read_sample_last_dts = 0;
     uint64_t                                  _read_sample_last_dts_v = 0;
     uint64_t                                  _read_sample_last_dts_a = 0;
-    bool                                      _first_read = true;
-    uint64_t                                  _first_read_dts = 0;
+    bool                                      _start_read_last_file = true;
+    uint64_t                                  _start_time_of_last_file = 0;
     uint32_t                                  _file_repeat = false;
     toolkit::Timer::Ptr                       _timer;
     std::recursive_mutex                      _mtx;
