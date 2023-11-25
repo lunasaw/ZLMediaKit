@@ -212,6 +212,7 @@ bool MultiMP4Reader::readSample() {
         // _last_dts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_dts;
         // _last_pts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_pts;
 
+#if 0
         MultiMediaSourceTuple tuple = _current_source_tuple;
         if(tuple.endMs != 0) {
             if(_start_read_last_file) {
@@ -225,6 +226,7 @@ bool MultiMP4Reader::readSample() {
                 break;
             }
         }
+#endif
 
         if (_muxer) {
             // if(frameFromPtr) {
