@@ -14,7 +14,7 @@
 using namespace std;
 using namespace toolkit;
 
-#define ENABLE_NTP_STAMP 1
+#define ENABLE_NTP_STAMP 0
 
 namespace mediakit {
 
