@@ -283,10 +283,7 @@ uint64_t NtpStamp::getNtpStamp(uint32_t rtp_stamp, uint32_t sample_rate) {
     if (rtp_stamp == _last_rtp_stamp) {
         return _last_ntp_stamp_us / 1000;
     }
-    // return getNtpStampUS(rtp_stamp, sample_rate) / 1000;
-    auto ret = getNtpStampUS(rtp_stamp, sample_rate) / 1000;
-    // TraceL << rtp_stamp << " " << ret << " " << sample_rate;
-    return ret;
+    return getNtpStampUS(rtp_stamp, sample_rate) / 1000;
 }
 
 uint64_t NtpStamp::getNtpStampUS(uint32_t rtp_stamp, uint32_t sample_rate) {

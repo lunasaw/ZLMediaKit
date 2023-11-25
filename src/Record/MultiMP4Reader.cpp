@@ -73,7 +73,7 @@ bool MultiMP4Reader::loadMP4(int index) {
     }
 
     _currentIndex++;
-    _read_mp4_item_done = true;
+
     DebugL << "load mp4 done:" << tuple.path << ",duration:" << _demuxer->getDurationMS();
     return true;
 }
@@ -167,7 +167,6 @@ bool MultiMP4Reader::readSample() {
     // }
     
     while (!eof && _last_dts < getCurrentStamp()) {
-        _read_mp4_item_done = false;
 
         auto frame = _demuxer->readFrame(keyFrame, eof);
         if (!frame) {
