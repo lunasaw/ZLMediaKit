@@ -1200,7 +1200,7 @@ void RtspSession::updateRtcpContext(const RtpPacket::Ptr &rtp){
     int track_index = getTrackIndexByTrackType(rtp->type);
     auto &rtcp_ctx = _rtcp_context[track_index];
     rtcp_ctx->onRtp(rtp->getSeq(), rtp->getStamp(), rtp->ntp_stamp, rtp->sample_rate, rtp->size() - RtpPacket::kRtpTcpHeaderSize);
-    if (!rtp->ntp_stamp && rtp->getStamp()) {
+    if (!rtp->ntp_stamp && !rtp->getStamp()) {
         // 忽略时间戳都为0的rtp
         return;
     }
