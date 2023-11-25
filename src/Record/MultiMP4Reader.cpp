@@ -166,13 +166,14 @@ bool MultiMP4Reader::readSample() {
                << ", current:" << getCurrentStamp();
     }
     
-    while (!eof && (_last_dts - _capture_dts) < getCurrentStamp()) {
+    while (!eof && _last_dts < getCurrentStamp()) {
         _read_mp4_item_done = false;
 
         auto frame = _demuxer->readFrame(keyFrame, eof);
         if (!frame) {
             continue;
         }
+        _last_dts = frame->dts();
         auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
 
         // if(!frameFromPtr) {
