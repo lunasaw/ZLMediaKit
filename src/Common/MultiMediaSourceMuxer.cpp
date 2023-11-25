@@ -450,6 +450,12 @@ void MultiMediaSourceMuxer::onAllTrackReady() {
         // 音频时间戳同步于视频，因为音频时间戳被修改后不影响播放
         _stamp[TrackAudio].syncTo(_stamp[TrackVideo]);
     }
+    _stamp[TrackAudio].enableRollback(false);
+    _stamp[TrackAudio].setMaxDelta(300);
+
+    _stamp[TrackVideo].enableRollback(false);
+    _stamp[TrackVideo].setMaxDelta(300);
+    
     InfoL << "stream: " << shortUrl() << " , codec info: " << getTrackInfoStr(this);
 }
 
