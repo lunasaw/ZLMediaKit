@@ -292,7 +292,7 @@ void MultiMP4Reader::setCurrentStamp(uint32_t new_stamp) {
     // TraceL << "MultiMP4Reader::setCurrentStamp:" << new_stamp;
 
     auto old_stamp = getCurrentStamp();
-    _seek_to = new_stamp;
+    // _seek_to = new_stamp;
     _last_dts = new_stamp;
     _seek_ticker.resetTime();
     if (old_stamp != new_stamp && _muxer) {
