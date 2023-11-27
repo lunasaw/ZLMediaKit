@@ -221,6 +221,13 @@ bool checkArgs(Args &args, const First &first, const KeyTypes &...keys) {
         throw InvalidArgsException("缺少必要参数:" #__VA_ARGS__); \
     }
 
+
+#define CHECK_TRACE_ID(...)  \
+    if(checkArgs(allArgs,##__VA_ARGS__)){        \
+       InfoL<< "traceId:" <<     allArgs["business_trace"]    ;    \
+    }
+
+
 // 检查http参数中是否附带secret密钥的宏，127.0.0.1的ip不检查密钥
 // 同时检测是否在ip白名单内
 #define CHECK_SECRET() \
