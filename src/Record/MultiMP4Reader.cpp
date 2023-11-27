@@ -162,6 +162,7 @@ bool MultiMP4Reader::readSample() {
         if (!frame) {
             continue;
         }
+        // WarnL << "frame pts: " << frame->pts();
 
 #if 1
         auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
@@ -177,6 +178,10 @@ bool MultiMP4Reader::readSample() {
                 break;
             }
         }
+
+        // 倍速
+        frameFromPtr->setPTS(frameFromPtr->pts()/_speed);
+        frameFromPtr->setDTS(frameFromPtr->dts()/_speed);
 #endif
        
         if (_muxer) {
@@ -207,15 +212,14 @@ bool MultiMP4Reader::readSample() {
 }
 
 void MultiMP4Reader::setCurrentStamp(uint32_t new_stamp) {
-
-    auto old_stamp = getCurrentStamp();
+    // auto old_stamp = getCurrentStamp();
     // _seek_to = new_stamp;
-    _last_dts = new_stamp;
+    // _last_dts = new_stamp;
     _seek_ticker.resetTime();
-    if (old_stamp != new_stamp && _muxer) {
-        //时间轴未拖动时不操作
-        _muxer->setTimeStamp(new_stamp);
-    }
+    // if (old_stamp != new_stamp && _muxer) {
+    //     //时间轴未拖动时不操作
+    //     _muxer->setTimeStamp(new_stamp);
+    // }
 }
 
 bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
