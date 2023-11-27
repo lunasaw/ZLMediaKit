@@ -88,7 +88,6 @@ bool MultiMP4Reader::isPlayEof() {
 void MultiMP4Reader::checkNeedSeek() {
     MultiMediaSourceTuple currTuple = _current_source_tuple;
     if(currTuple.startMs != 0) {
-        DebugL << "seek to:" << currTuple.startMs;
         seekTo(currTuple.startMs);
     }
     _seek_ticker.resetTime(); //强制还原
@@ -156,68 +155,20 @@ bool MultiMP4Reader::readSample() {
 
     bool keyFrame = false;
     bool eof = false;
-    uint64_t oldDts = 0;
     GET_CONFIG(uint32_t, sampleMS, Record::kSampleMS);
-    // if((_last_dts - _capture_dts) >= getCurrentStamp()) {
-    //     DebugL << "警告: 帧间隔大于: " << sampleMS
-    //            << ", last_dts:" << _last_dts
-    //            << ", capture_dts:" << _capture_dts
-    //            << ", interval:" << _last_dts - _capture_dts
-    //            << ", current:" << getCurrentStamp();
-    // }
     
     while (!eof && _last_dts < getCurrentStamp()) {
-
         auto frame = _demuxer->readFrame(keyFrame, eof);
         if (!frame) {
             continue;
         }
-        
-        // auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
 
-        // if(!frameFromPtr) {
-        //     continue;
-        // }
-
-        // if(_read_sample_last_dts >= frame->dts()) {
-        //     frameFromPtr->setDTS(_read_sample_last_dts + 1);
-        //     frameFromPtr->setPTS(_read_sample_last_dts + 1);
-        // }
-        // _read_sample_last_dts = frame->dts();
-
-
-        // if(frame->getTrackType() == TrackVideo) {
-        //     if(_read_sample_last_dts_v >= frame->dts()) {
-        //         frameFromPtr->setDTS(_read_sample_last_dts_v + 1);
-        //         frameFromPtr->setPTS(_read_sample_last_dts_v + 1);
-        //     }
-        //     _read_sample_last_dts_v = frame->dts();
-        // }
-
-        // if(frame->getTrackType() == TrackAudio) {
-        //     if(_read_sample_last_dts_a >= frame->dts()) {
-        //         frameFromPtr->setDTS(_read_sample_last_dts_a + 1);
-        //         frameFromPtr->setPTS(_read_sample_last_dts_a + 1);
-        //     }
-        //     _read_sample_last_dts_a = frame->dts();
-        // }
-
-        // oldDts = frame->dts();
-        // if(_first_read) {
-        //     _first_read = false;
-        //     DebugL << "first read frame dts:" << oldDts << ",isKeyFrame:" << frame->keyFrame();
-        //     _first_read_dts = frameFromPtr->dts();
-        // }
-
-        // _last_dts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_dts;
-        // _last_pts = MAX(frameFromPtr->dts() - _first_read_dts, 0) + _capture_pts;
-
-#if 0
+#if 1
+        auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
         MultiMediaSourceTuple tuple = _current_source_tuple;
         if(tuple.endMs != 0) {
             if(_start_read_last_file) {
                 _start_read_last_file = false;
-                DebugL << "first read frame dts:" << oldDts << ",isKeyFrame:" << frame->keyFrame();
                 _start_time_of_last_file = frameFromPtr->dts();
             }
             if(frame->dts() - _start_time_of_last_file >= tuple.endMs) {
@@ -227,42 +178,19 @@ bool MultiMP4Reader::readSample() {
             }
         }
 #endif
-
        
         if (_muxer) {
-            // if(frameFromPtr) {
-            //     frameFromPtr->setPTS(_last_pts/_speed);
-            //     frameFromPtr->setDTS(_last_dts/_speed);
-            // }
-        //    DebugL << "oldDts:" << oldDts
-        //           << ",inputDts:" << frame->dts()
-        //           << ",capture:" << _capture_dts
-        //           << ",_last_dts:" << _last_dts
-        //           << ",_capture_dts:" << _capture_dts
-        //           << ",isKeyFrame:" << frame->keyFrame()
-        //           << ",now:" << getCurrentStamp()
-        //           << ",codecId:" << frame->getCodecName();
             _muxer->inputFrame(frame);
             _last_dts = _muxer->_current_stamp;
         }
         
     }
 
-    
-    // if(tuple.endMs != 0) {
-    //     if(frame->dts() - _first_read_dts >= tuple.endMs) {
-    //         eof = true;
-    //         DebugL << "readFrame 超过结束时间限制，强制 eof 结束";
-    //     }
-    // }
-
     if(eof) {
         if(isPlayEof()) {
             DebugL << "play eof.";
             return false;
         }
-        // _capture_dts = _last_dts;
-        // _capture_pts = _last_pts;
         DebugL << "MultiMP4Reader readSample EOF."
                << ",_file_repeat:" << _file_repeat
                << ", isPlayEof:" << isPlayEof();
@@ -270,27 +198,15 @@ bool MultiMP4Reader::readSample() {
         if(loadMP4(_currentIndex)) {
             _start_read_last_file = true;
             _start_time_of_last_file = 0;
-            // _read_sample_last_dts_v = 0;
-            // _read_sample_last_dts_a = 0;
-            // _read_sample_last_dts = 0;
-            // checkNeedSeek();
             eof = false;
         } else {
             eof = true;
         }
     }
-    if (eof && _file_repeat) {
-        //需要从头开始看
-        seekTo(0);
-        return true;
-    }
     return !eof;
 }
 
 void MultiMP4Reader::setCurrentStamp(uint32_t new_stamp) {
-    // auto old_stamp = getCurrentStamp();
-    // _seek_ticker.resetTime();
-    // TraceL << "MultiMP4Reader::setCurrentStamp:" << new_stamp;
 
     auto old_stamp = getCurrentStamp();
     // _seek_to = new_stamp;
@@ -306,8 +222,10 @@ bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
     lock_guard<recursive_mutex> lck(_mtx);
     if (stamp_seek > _demuxer->getDurationMS()) {
         //超过文件长度
+        WarnL << "Seek Exceeding file length:" << stamp_seek << " > " << _demuxer->getDurationMS();
         return false;
     }
+    DebugL << "seek to:" << stamp_seek << " ms";
     auto stamp = _demuxer->seekTo(stamp_seek);
     if (stamp == -1) {
         //seek失败
@@ -319,7 +237,7 @@ bool MultiMP4Reader::seekTo(uint32_t stamp_seek) {
         setCurrentStamp((uint32_t) stamp);
         return true;
     }
-    InfoL << "seek:" << stamp_seek;
+
     //搜索到下一帧关键帧
     bool keyFrame = false;
     bool eof = false;

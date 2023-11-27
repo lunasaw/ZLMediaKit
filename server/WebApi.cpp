@@ -625,6 +625,17 @@ void webApiAddStreamProxy(const std::string &vhost, const std::string &app, cons
     player->play(url);
 }
 
+uint32_t getFileSize(std::string path){
+    struct stat statbuff;
+	if(stat(path.c_str(), &statbuff)<0) {
+        // ErrorL << "Get file faild.";
+        return 0;
+	}
+    // InfoL << "file size: " << statbuff.st_size;
+    return statbuff.st_size;
+}
+
+
 template <typename Type>
 static void getArgsValue(const HttpAllArgs<ApiArgsType> &allArgs, const string &key, Type &value) {
     auto val = allArgs[key];
@@ -1648,7 +1659,8 @@ void installWebApi() {
                         //我们只收集mp4文件，对文件夹不感兴趣
                         // std::cout << "xxx:  " << record_path + "/" + relative_path << std::endl;
                         fileObj["file"] = relative_path;
-                        fileObj["size"] = "0";//std::to_string(File::fileSize((record_path + relative_path).c_str())/1024/1024);
+                        fileObj["size"] = std::to_string(getFileSize(record_path + relative_path)/1024/1024);
+                        // fileObj["size"] = std::to_string(File::fileSize((record_path + relative_path).c_str())/1024/1024);
                         paths.append(fileObj);
                     }
                 } else if (isDir && relative_path.find(period) == 0) {

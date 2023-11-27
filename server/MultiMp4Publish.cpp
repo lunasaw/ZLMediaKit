@@ -26,7 +26,7 @@ int MultiMp4Publish::Publish(std::string callId, std::string startTime, std::str
     std::vector<MultiMediaSourceTuple> filePathVec = {};
     // todo: 通过时间段，找出对应的文件列表，同时应该得到第一个文件的开始时刻和最后一个文件结束时刻（也就是需要seek的位置）;
     std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/"+ mINI::Instance()[mediakit::Record::kAppName] + "/" + app + "/" + stream;
-//    filePathVec = Scanner::getMST(path, startTime, endTime);
+
     FileScanner fileScanner;
     filePathVec = fileScanner.getPlayFileList(path, startTime, endTime);
     if(filePathVec.empty()){
@@ -34,15 +34,6 @@ int MultiMp4Publish::Publish(std::string callId, std::string startTime, std::str
         WarnL << errMsg;
         return -1;
     }
-    // std::vector<MultiMediaSourceTuple> filePathVec = {};
-    // std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/"+ mINI::Instance()[mediakit::Record::kAppName] + "/" + app + "/" + stream;
-    // Scanner scanner;
-    // filePathVec = scanner.getPlayFileList(path, startTime, endTime);
-    // if(filePathVec.empty()){
-    //     errMsg = "未匹配到任何文件[时段:" + startTime + " _ " + endTime + ", 路径：" + path + "]";
-    //     WarnL << errMsg;
-    //     return -1;
-    // }
 
     auto poller = EventPollerPool::Instance().getPoller();
     if(createPusher(callId, poller, RTSP_SCHEMA, DEFAULT_VHOST, app, stream, filePathVec, url, atof(speed.c_str())<1.0f?1.0f:atof(speed.c_str()))<0){

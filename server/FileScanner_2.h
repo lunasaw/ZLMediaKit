@@ -54,15 +54,15 @@ public:
             for(auto item=files.begin();  item!=files.end(); item++){
                 MultiMediaSourceTuple mst;
                 if(files.size() == 1){
-                    mst.startMs = bOffset;
-                    mst.endMs = eOffset;
+                    mst.startMs = bOffset*1000;
+                    mst.endMs = eOffset*1000;
                 }else{
                     if(item==files.begin()){
-                        mst.startMs = bOffset;
+                        mst.startMs = bOffset*1000;
                         mst.endMs = 0;
                     }else if(item==--files.end()){
                         mst.startMs = 0;
-                        mst.endMs = eOffset;
+                        mst.endMs = eOffset*1000;
                     }else{
                         mst.startMs = 0;
                         mst.endMs = 0;
@@ -72,8 +72,8 @@ public:
                 vec.push_back(mst);
             }
             DebugL << "总文件数量: " <<  files.size();
-            DebugL << "获取的第一个文件: " <<  files[0] <<", 起始偏移: "<< bOffset;
-            DebugL <<"获取的最后一个文件："<<files[files.size() - 1] << ", 末尾偏移: " << eOffset;
+            DebugL << "获取的第一个文件: " <<  files[0] <<", 起始偏移: "<< bOffset << " s";
+            DebugL <<"获取的最后一个文件："<<files[files.size() - 1] << ", 末尾偏移: " << eOffset << " s";
         }
         return vec;
     }
@@ -118,12 +118,30 @@ private:
     std::vector<std::string>  getFirstFile(std::string folder_path, const std::string start_time/* YY-MM-DD hh:mm:ss */, const std::string end_time/* YY-MM-DD hh:mm:ss */, uint64_t& offset) 
     {
         std::vector<std::string> start_time_ans = split(start_time, re_vec[0]);//" +"
-        std::vector<std::string> end_time_ans = split(end_time, re_vec[0]);//" +"
         playStartDate = start_time_ans[0];
         std::string hhmmss = start_time_ans[1];
         iPlayStartTime = string2second(hhmmss);
-        hhmmss = end_time_ans[1];
-        iPlayEndTime = string2second(hhmmss);
+
+        // 判断第一个点播开始时刻是否在当天的第一个文件时间段内
+        std::vector<std::string> infos = split(folder_map[playStartDate].front(), re_vec[1]);//"[-.]+"
+        std::string firstFileStartTime = infos[0];
+        int iFirstFileStartTime = string2second2(firstFileStartTime);
+        if(iPlayStartTime < iFirstFileStartTime){
+            // 否: 从前一天的最后一个文件开始播放
+            // playStartDate -= 1;
+            std::string yestaday = dateSub(playStartDate, 1);
+            std::string curFile = folder_map.at(yestaday).back();
+            std::string file_path = folder_path+"/"+yestaday+"/"+ curFile;
+            playFiles.push_back(file_path);
+            std::vector<std::string> infos = split(curFile, re_vec[1]);//"[-.]+"
+            std::string curFileStartTime = infos[0];
+
+            int iCurFileStartTime = string2second2(curFileStartTime);
+            offset = 24*60*60 - iCurFileStartTime;
+            return playFiles;
+        }else{
+            // 是: 从当天的第一个文件开始播放
+        }
 
         for(auto item=folder_map.begin(); item!=folder_map.end(); item++){
             if(playStartDate==item->first){
@@ -230,6 +248,7 @@ private:
                         if(iPlayStopTime > iFileStartTime && iPlayStopTime <= iFileEndTime){
                             //播放的时间在文件内部
                             offset = iPlayStopTime - iFileStartTime;    // 应该播放到此文件的这个位置
+                            break;
                         } else if(iPlayStopTime > iFileEndTime){
                             //播放的时间在文件外部
                             offset = 0;
@@ -238,6 +257,7 @@ private:
 //                        DebugL << "匹配的文件 3 .1 计算末尾文件时间偏移: "  <<iFileEndTime ;
                         //点播时间在文件里面
                         offset =  (iFileEndTime - iFileStartTime) - (iFileEndTime - iPlayStopTime);
+                        break;
                     }
                 }
             } else{
@@ -295,17 +315,19 @@ private:
 //                        DebugL << "匹配的文件 4.0: "  <<item->first << "   "<< iFileEndTime <<","<<iPlayStopTimeEndFile ;
                         //文件开始时间 > 点播开始时间 && 文件结束的时间 < 点播结束的时间
                         std::string file_path = folder_path+"/"+item->first+"/"+ *file_itr;
-                        if(  iFileStartTime < iPlayStopTimeEndFile && iFileEndTime <iPlayStopTimeEndFile ) {
+                        if(  iFileStartTime < iPlayStopTimeEndFile && iFileEndTime <=iPlayStopTimeEndFile ) {
                             //                            DebugL << "匹配的文件 4: " << file_path;
                             playFiles.push_back(file_path);
 
-                            if (iPlayStopTime > iFileEndTime){
-                                    offset = 0;
-                            }else{
-                                offset = iPlayStopTime - iFileStartTime;
+                            if(iPlayStopTime > iFileStartTime && iPlayStopTime <= iFileEndTime){
+                                //播放的时间在文件内部
+                                offset = iPlayStopTime - iFileStartTime;    // 应该播放到此文件的这个位置
+                                break;
+                            } else if(iPlayStopTime > iFileEndTime){
+                                //播放的时间在文件外部
+                                offset = 0;
                             }
                         }
-
                     }
                     break;
                  }
@@ -388,6 +410,40 @@ private:
             s = safe_stoi(time.substr(4,2));
         }
         return (h) * 3600 + (m)*60 + (s);
+    }
+
+    #include <iostream>
+    #include <chrono>
+
+     std::string dateSub(std::string date, int num/*天数*/)
+    {
+        // 从字符串中解析日期
+        std::string date_str = date;
+        std::tm date_tm;
+        bzero(&date_tm, sizeof(std::tm));
+        std::istringstream iss(date_str);
+        iss >> std::get_time(&date_tm, "%Y-%m-%d");
+
+        // 将日期转换为 std::chrono::time_point
+        std::time_t tt = std::mktime(&date_tm);
+        auto tp = std::chrono::system_clock::from_time_t(tt);
+
+        // 将日期减去一定的天数
+        int days_to_sub = num;
+        tp -= std::chrono::hours(24) * days_to_sub;
+
+        // 将日期转换回 std::tm
+        tt = std::chrono::system_clock::to_time_t(tp);
+        auto new_date_tm = *std::localtime(&tt);
+
+        // 将日期格式化为 YY-MM-DD 的字符串
+        std::stringstream new_date_ss;
+        new_date_ss << std::put_time(&new_date_tm, "%Y-%m-%d");
+        std::string new_date_str = new_date_ss.str();
+
+        std::cout << new_date_str << std::endl;
+
+        return new_date_str;
     }
 
     bool isHidden(std::string filename){
