@@ -696,6 +696,7 @@ void installWebApi() {
     //测试url http://127.0.0.1/index/api/getServerConfig
     api_regist("/index/api/getServerConfig",[](API_ARGS_MAP){
         CHECK_SECRET();
+        CHECK_TRACE_ID("business_trace");
         Value obj;
         for (auto &pr : mINI::Instance()) {
             obj[pr.first] = (string &) pr.second;
@@ -708,6 +709,7 @@ void installWebApi() {
     //你也可以通过http post方式传参，可以通过application/x-www-form-urlencoded或application/json方式传参
     api_regist("/index/api/setServerConfig",[](API_ARGS_MAP){
         CHECK_SECRET();
+        CHECK_TRACE_ID("business_trace");
         auto &ini = mINI::Instance();
         int changed = API::Success;
         for (auto &pr : allArgs.getArgs()) {
@@ -765,6 +767,7 @@ void installWebApi() {
     //测试url http://127.0.0.1/index/api/restartServer
     api_regist("/index/api/restartServer",[](API_ARGS_MAP){
         CHECK_SECRET();
+        CHECK_TRACE_ID("business_trace");
         EventPollerPool::Instance().getPoller()->doDelayTask(1000,[](){
             //尝试正常退出
             ::kill(getpid(), SIGINT);
@@ -840,6 +843,7 @@ void installWebApi() {
     //测试url2(获取rtsp类型的流) http://127.0.0.1/index/api/getMediaList?schema=rtsp
     api_regist("/index/api/getMediaList",[](API_ARGS_MAP){
         CHECK_SECRET();
+        CHECK_TRACE_ID("business_trace");
         //获取所有MediaSource列表
         MediaSource::for_each_media([&](const MediaSource::Ptr &media) {
             val["data"].append(makeMediaSourceJson(*media));
@@ -850,6 +854,7 @@ void installWebApi() {
     api_regist("/index/api/isMediaOnline",[](API_ARGS_MAP){
         CHECK_SECRET();
         CHECK_ARGS("schema","vhost","app","stream");
+        CHECK_TRACE_ID("business_trace");
         val["online"] = (bool) (MediaSource::find(allArgs["schema"],allArgs["vhost"],allArgs["app"],allArgs["stream"]));
     });
 
@@ -858,6 +863,7 @@ void installWebApi() {
     api_regist("/index/api/getMediaPlayerList",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("schema", "vhost", "app", "stream");
+        CHECK_TRACE_ID("business_trace");
         auto src = MediaSource::find(allArgs["schema"], allArgs["vhost"], allArgs["app"], allArgs["stream"]);
         if (!src) {
             throw ApiRetException("can not find the stream", API::NotFound);
@@ -901,6 +907,7 @@ void installWebApi() {
     api_regist("/index/api/getMediaInfo",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("schema","vhost","app","stream");
+        CHECK_TRACE_ID("business_trace");
         auto src = MediaSource::find(allArgs["schema"],allArgs["vhost"],allArgs["app"],allArgs["stream"]);
         if(!src){
             throw ApiRetException("can not find the stream", API::NotFound);
@@ -1000,6 +1007,7 @@ void installWebApi() {
     //测试url http://127.0.0.1/index/api/kick_sessions?local_port=1935
     api_regist("/index/api/kick_sessions",[](API_ARGS_MAP){
         CHECK_SECRET();
+        CHECK_TRACE_ID("business_trace");
         uint16_t local_port = allArgs["local_port"].as<uint16_t>();
         string peer_ip = allArgs["peer_ip"];
         size_t count_hit = 0;
@@ -1080,6 +1088,7 @@ void installWebApi() {
     api_regist("/index/api/addStreamPusherProxy", [](API_ARGS_MAP_ASYNC) {
         CHECK_SECRET();
         CHECK_ARGS("schema", "vhost", "app", "stream", "dst_url");
+        CHECK_TRACE_ID("business_trace");
         auto dst_url = allArgs["dst_url"];
         auto retry_count = allArgs["retry_count"].empty() ? -1 : allArgs["retry_count"].as<int>();
         addStreamPusherProxy(allArgs["schema"],
@@ -1107,6 +1116,7 @@ void installWebApi() {
     api_regist("/index/api/delStreamPusherProxy", [](API_ARGS_MAP) {
         CHECK_SECRET();
         CHECK_ARGS("key");
+        CHECK_TRACE_ID("business_trace");
         lock_guard<recursive_mutex> lck(s_proxyPusherMapMtx);
         val["data"]["flag"] = s_proxyPusherMap.erase(allArgs["key"]) == 1;
     });
@@ -1116,7 +1126,7 @@ void installWebApi() {
     api_regist("/index/api/addStreamProxy",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("vhost","app","stream","url");
-
+        CHECK_TRACE_ID("business_trace");
         ProtocolOption option(allArgs);
         auto retry_count = allArgs["retry_count"].empty()? -1: allArgs["retry_count"].as<int>();
         webApiAddStreamProxy(allArgs["vhost"],
@@ -1143,6 +1153,7 @@ void installWebApi() {
     api_regist("/index/api/delStreamProxy",[](API_ARGS_MAP){
         CHECK_SECRET();
         CHECK_ARGS("key");
+        CHECK_TRACE_ID("business_trace");
         lock_guard<recursive_mutex> lck(s_proxyMapMtx);
         val["data"]["flag"] = s_proxyMap.erase(allArgs["key"]) == 1;
     });
@@ -1184,6 +1195,7 @@ void installWebApi() {
     api_regist("/index/api/addFFmpegSource",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("src_url","dst_url","timeout_ms");
+        CHECK_TRACE_ID("business_trace");
         auto src_url = allArgs["src_url"];
         auto dst_url = allArgs["dst_url"];
         int timeout_ms = allArgs["timeout_ms"];
@@ -1222,7 +1234,7 @@ void installWebApi() {
     api_regist("/index/api/getRtpInfo",[](API_ARGS_MAP){
         CHECK_SECRET();
         CHECK_ARGS("stream_id");
-
+        CHECK_TRACE_ID("business_trace");
         auto process = RtpSelector::Instance().getProcess(allArgs["stream_id"], false);
         if (!process) {
             val["exist"] = false;
@@ -1235,6 +1247,7 @@ void installWebApi() {
     api_regist("/index/api/openRtpServer",[](API_ARGS_MAP){
         CHECK_SECRET();
         CHECK_ARGS("port", "stream_id");
+        CHECK_TRACE_ID("business_trace");
         auto stream_id = allArgs["stream_id"];
         auto tcp_mode = allArgs["tcp_mode"].as<int>();
         if (allArgs["enable_tcp"].as<int>() && !tcp_mode) {
@@ -1272,6 +1285,7 @@ void installWebApi() {
     api_regist("/index/api/connectRtpServer", [](API_ARGS_MAP_ASYNC) {
         CHECK_SECRET();
         CHECK_ARGS("stream_id", "dst_url", "dst_port");
+        CHECK_TRACE_ID("business_trace");
         connectRtpServer(
             allArgs["stream_id"], allArgs["dst_url"], allArgs["dst_port"],
             [val, headerOut, invoker](const SockException &ex) mutable {
@@ -1286,7 +1300,7 @@ void installWebApi() {
     api_regist("/index/api/closeRtpServer",[](API_ARGS_MAP){
         CHECK_SECRET();
         CHECK_ARGS("stream_id");
-
+        CHECK_TRACE_ID("business_trace");
         if(!closeRtpServer(allArgs["stream_id"])){
             val["hit"] = 0;
             return;
@@ -1297,7 +1311,7 @@ void installWebApi() {
     api_regist("/index/api/updateRtpServerSSRC",[](API_ARGS_MAP){
         CHECK_SECRET();
         CHECK_ARGS("stream_id", "ssrc");
-
+        CHECK_TRACE_ID("business_trace");
         lock_guard<recursive_mutex> lck(s_rtpServerMapMtx);
         auto it = s_rtpServerMap.find(allArgs["stream_id"]);
         if (it == s_rtpServerMap.end()) {
@@ -1321,7 +1335,7 @@ void installWebApi() {
     api_regist("/index/api/startSendRtp",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("vhost", "app", "stream", "ssrc", "dst_url", "dst_port", "is_udp");
-
+        CHECK_TRACE_ID("business_trace");
         auto src = MediaSource::find(allArgs["vhost"], allArgs["app"], allArgs["stream"], allArgs["from_mp4"].as<int>());
         if (!src) {
             throw ApiRetException("can not find the source stream", API::NotFound);
@@ -1357,7 +1371,7 @@ void installWebApi() {
     api_regist("/index/api/startSendRtpPassive",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("vhost", "app", "stream", "ssrc");
-
+        CHECK_TRACE_ID("business_trace");
         auto src = MediaSource::find(allArgs["vhost"], allArgs["app"], allArgs["stream"], allArgs["from_mp4"].as<int>());
         if (!src) {
             throw ApiRetException("can not find the source stream", API::NotFound);
@@ -1391,7 +1405,7 @@ void installWebApi() {
     api_regist("/index/api/stopSendRtp",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("vhost", "app", "stream");
-
+        CHECK_TRACE_ID("business_trace");
         auto src = MediaSource::find(allArgs["vhost"], allArgs["app"], allArgs["stream"]);
         if (!src) {
             throw ApiRetException("can not find the stream", API::NotFound);
@@ -1412,6 +1426,7 @@ void installWebApi() {
     api_regist("/index/api/pauseRtpCheck", [](API_ARGS_MAP) {
         CHECK_SECRET();
         CHECK_ARGS("stream_id");
+        CHECK_TRACE_ID("business_trace");
         //只是暂停流的检查，流媒体服务器做为流负载服务，收流就转发，RTSP/RTMP有自己暂停协议
         auto rtp_process = RtpSelector::Instance().getProcess(allArgs["stream_id"], false);
         if (rtp_process) {
@@ -1424,6 +1439,7 @@ void installWebApi() {
     api_regist("/index/api/resumeRtpCheck", [](API_ARGS_MAP) {
         CHECK_SECRET();
         CHECK_ARGS("stream_id");
+        CHECK_TRACE_ID("business_trace");
         auto rtp_process = RtpSelector::Instance().getProcess(allArgs["stream_id"], false);
         if (rtp_process) {
             rtp_process->setStopCheckRtp(false);
@@ -1602,6 +1618,7 @@ void installWebApi() {
     api_regist("/index/api/getMp4RecordFile", [](API_ARGS_MAP){
         CHECK_SECRET();
         CHECK_ARGS("vhost", "app", "stream");
+        CHECK_TRACE_ID("business_trace");
         auto tuple = MediaTuple{allArgs["vhost"], allArgs["app"], allArgs["stream"]};
         auto record_path = Recorder::getRecordPath(Recorder::type_mp4, tuple, allArgs["customized_path"]);
         auto period = allArgs["period"];
@@ -1638,6 +1655,7 @@ void installWebApi() {
     api_regist("/index/api/getMp4RecordFileInfo", [](API_ARGS_MAP){
         CHECK_SECRET();
         CHECK_ARGS("vhost", "app", "stream");
+        CHECK_TRACE_ID("business_trace");
         auto tuple = MediaTuple{allArgs["vhost"], allArgs["app"], allArgs["stream"]};
         auto record_path = Recorder::getRecordPath(Recorder::type_mp4, tuple, allArgs["customized_path"]);
         auto period = allArgs["period"];
@@ -1680,6 +1698,7 @@ void installWebApi() {
     api_regist("/index/api/getMp4RecordSummary", [](API_ARGS_MAP){
         CHECK_SECRET();
         CHECK_ARGS("vhost", "app");
+        CHECK_TRACE_ID("business_trace");
         auto app_path = Recorder::getRecordAppPath(Recorder::type_mp4, allArgs["vhost"], allArgs["app"]);
 
         if(!std::filesystem::exists(app_path)  ){
@@ -1747,6 +1766,7 @@ void installWebApi() {
     api_regist("/index/api/getSnap", [](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("url", "timeout_sec", "expire_sec");
+        CHECK_TRACE_ID("business_trace");
         GET_CONFIG(string, snap_root, API::kSnapRoot);
 
         bool have_old_snap = false, res_old_snap = false;
@@ -1817,6 +1837,7 @@ void installWebApi() {
     api_regist("/index/api/startMultiMp4Publish",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("callId", "startTime", "endTime", "speed", "app", "stream", "remoteAddress");
+        CHECK_TRACE_ID("business_trace");
         auto callid = allArgs["callId"];
         auto startTime = allArgs["startTime"];
         auto endTime = allArgs["endTime"];
@@ -1838,6 +1859,7 @@ void installWebApi() {
     api_regist("/index/api/stopMultiMp4Publish",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("callId")
+        CHECK_TRACE_ID("business_trace");
         std::string callid = allArgs["callId"];
         std::string errMsg;
         if(MultiMp4Publish::GetCreate()->Stop(callid, errMsg)<0){
@@ -1869,6 +1891,7 @@ void installWebApi() {
 
     api_regist("/index/api/getStorageSpace",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
+        CHECK_TRACE_ID("business_trace");
         std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
         std::string appName = mINI::Instance()[mediakit::Record::kAppName];
 
