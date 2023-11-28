@@ -606,7 +606,8 @@ void webApiAddStreamProxy(const std::string &vhost, const std::string &app, cons
          InfoL << "reconnect_count:" << std::to_string(reconnect_count);
          if(reconnect_count == 2 || (reconnect_count != 0 && reconnect_count % 10 == 0)) {
              std::string ip = IPAddress::getIP(url);
-             bool isIPReachable = IPAddress::isIPReachable(ip);
+            //  bool isIPReachable = IPAddress::isIPReachable(ip);
+            bool isIPReachable = false;
              NOTICE_EMIT(BroadcastIPNotFoundArgs, Broadcast::KBroadcastIPNotFound, url, app, stream, ip, isIPReachable ? 1 : 2);
          }
     });
