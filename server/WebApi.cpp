@@ -1048,6 +1048,7 @@ void installWebApi() {
         lock_guard<recursive_mutex> lck(s_proxyPusherMapMtx);
         if (s_proxyPusherMap.find(key) != s_proxyPusherMap.end()) {
             //已经在推流了
+            // WarnL << "[ " <<app << "/" << stream << "] 已经在推流了";
             cb(SockException(Err_success), key);
             return;
         }
