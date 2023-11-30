@@ -98,7 +98,7 @@ void PusherProxy::publish(const string &dst_url) {
 }
 
 void PusherProxy::rePublish(const string &dst_url, int failed_cnt) {
-    auto delay = MAX(2 * 1000, MIN(failed_cnt * 3000, 60 * 1000));
+    auto delay = 2*1000;//MAX(2 * 1000, MIN(failed_cnt * 3000, 60 * 1000));
     weak_ptr<PusherProxy> weak_self = shared_from_this();
     _timer = std::make_shared<Timer>(
         delay / 1000.0f,

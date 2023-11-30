@@ -48,7 +48,7 @@ PusherBase::Ptr PusherBase::createPusher(const EventPoller::Ptr &poller,
 }
 
 PusherBase::PusherBase() {
-    this->mINI::operator[](Client::kTimeoutMS) = 10000;
+    this->mINI::operator[](Client::kTimeoutMS) = 5000;
     this->mINI::operator[](Client::kBeatIntervalMS) = 5000;
 }
 
