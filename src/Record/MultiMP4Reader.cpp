@@ -180,8 +180,13 @@ bool MultiMP4Reader::readSample() {
         }
 
         // 倍速
-        frameFromPtr->setPTS(frameFromPtr->pts()/_speed);
-        frameFromPtr->setDTS(frameFromPtr->dts()/_speed);
+#if 0   // 由播放器控制播放速度
+        if(_speed>1){
+            frameFromPtr->setPTS(frameFromPtr->pts()/_speed);
+            frameFromPtr->setDTS(frameFromPtr->dts()/_speed);
+        }
+#endif
+
 #endif
        
         if (_muxer) {
