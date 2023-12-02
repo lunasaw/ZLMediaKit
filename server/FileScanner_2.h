@@ -143,6 +143,7 @@ private:
             std::string yestodayLastFileEndTime = infoss[1];
             int iYestodayLastFileEndTime = string2second2(yestodayLastFileEndTime);
             if(iPlayStartTime < iYestodayLastFileEndTime){
+                // 播放的时间点在昨天的最后一个文件的时间段内
                 std::string file_path = folder_path+"/"+yestaday+"/"+ curFile;
                 playFiles.push_back(file_path);
                 std::vector<std::string> infos = split(curFile, re_vec[1]);//"[-.]+"
