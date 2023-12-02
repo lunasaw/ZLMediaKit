@@ -91,6 +91,7 @@ private:
                 std::vector<std::string> files;
                 for (const auto& file : std::filesystem::directory_iterator(entry.path())) {
                     if (file.is_regular_file()) {
+                        if(isHidden(file.path().filename().string())) continue;
                         files.push_back(file.path().filename().string());
                     }
                 }
@@ -134,6 +135,9 @@ private:
             // 否: 从前一天的最后一个文件开始播放
             // playStartDate -= 1;
             std::string yestaday = dateSub(playStartDate, 1);
+            if(folder_map.find(yestaday) == folder_map.end()){
+                return playFiles;
+            }
             std::string curFile = folder_map.at(yestaday).back();
             std::string file_path = folder_path+"/"+yestaday+"/"+ curFile;
             playFiles.push_back(file_path);

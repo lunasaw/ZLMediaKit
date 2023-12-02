@@ -161,7 +161,6 @@ bool MultiMP4Reader::readSample() {
         }
         // ErrorL << "frame pts: " << frame->pts();
 
-#if 1
         auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
         MultiMediaSourceTuple tuple = _current_source_tuple;
         if(tuple.endMs != 0) {
@@ -184,7 +183,6 @@ bool MultiMP4Reader::readSample() {
         // }
 #endif
 
-#endif
 
         // WarnL << "frame pts: " << frame->pts();
        
