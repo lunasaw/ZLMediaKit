@@ -6,8 +6,7 @@
 #include "Common/config.h"
 #include "Thread/WorkThreadPool.h"
 #include "Util/File.h"
-
-#define MAX(x,y) (x>y?x:y)
+#include "Common/macros.h"
 
 using namespace std;
 using namespace toolkit;
@@ -117,7 +116,6 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
                 bool flag = strong_self->readSample();
 
                 if(!flag) {
-                    DebugL << "read sample:0";
                     strong_self->_end_CB();
                 }
                 return flag;
@@ -132,7 +130,6 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
                 lock_guard<recursive_mutex> lck(strong_self->_mtx);
                 bool flag = strong_self->readSample();
                 if(!flag) {
-                    DebugL << "read sample:0";
                     strong_self->_end_CB();
                 }
                 return flag;
@@ -174,7 +171,7 @@ bool MultiMP4Reader::readSample() {
             }
             if(frame->dts() - _start_time_of_last_file >= tuple.endMs) {
                 eof = true;
-                DebugL << "readFrame 超过结束时间限制，强制 eof 结束";
+                DebugL << "最后一个文件读取结束: End of all files.";
                 break;
             }
         }
@@ -193,19 +190,15 @@ bool MultiMP4Reader::readSample() {
        
         if (_muxer) {
             _muxer->inputFrame(frame);
-            _last_dts = _muxer->_current_stamp;
+            _last_dts = _muxer->getCurrentStamp();
         }
         
     }
 
     if(eof) {
         if(isPlayEof()) {
-            DebugL << "play eof.";
             return false;
         }
-        DebugL << "MultiMP4Reader readSample EOF."
-               << ",_file_repeat:" << _file_repeat
-               << ", isPlayEof:" << isPlayEof();
 
         if(loadMP4(_currentIndex)) {
             _start_read_last_file = true;

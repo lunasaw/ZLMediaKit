@@ -122,6 +122,10 @@ private:
         std::string hhmmss = start_time_ans[1];
         iPlayStartTime = string2second(hhmmss);
 
+        if(folder_map.find(playStartDate) == folder_map.end()){
+            return playFiles;
+        }
+
         // 判断第一个点播开始时刻是否在当天的第一个文件时间段内
         std::vector<std::string> infos = split(folder_map[playStartDate].front(), re_vec[1]);//"[-.]+"
         std::string firstFileStartTime = infos[0];
