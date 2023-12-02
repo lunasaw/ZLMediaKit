@@ -139,14 +139,19 @@ private:
                 return playFiles;
             }
             std::string curFile = folder_map.at(yestaday).back();
-            std::string file_path = folder_path+"/"+yestaday+"/"+ curFile;
-            playFiles.push_back(file_path);
-            std::vector<std::string> infos = split(curFile, re_vec[1]);//"[-.]+"
-            std::string curFileStartTime = infos[0];
+            std::vector<std::string> infoss = split(curFile, re_vec[1]);//"[-.]+"
+            std::string yestodayLastFileEndTime = infoss[1];
+            int iYestodayLastFileEndTime = string2second2(yestodayLastFileEndTime);
+            if(iPlayStartTime < iYestodayLastFileEndTime){
+                std::string file_path = folder_path+"/"+yestaday+"/"+ curFile;
+                playFiles.push_back(file_path);
+                std::vector<std::string> infos = split(curFile, re_vec[1]);//"[-.]+"
+                std::string curFileStartTime = infos[0];
 
-            int iCurFileStartTime = string2second2(curFileStartTime);
-            offset = 24*60*60 - iCurFileStartTime;
-            return playFiles;
+                int iCurFileStartTime = string2second2(curFileStartTime);
+                offset = 24*60*60 - iCurFileStartTime;
+                return playFiles;
+            }
         }else{
             // 是: 从当天的第一个文件开始播放
         }
