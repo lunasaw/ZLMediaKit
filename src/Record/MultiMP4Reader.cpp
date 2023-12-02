@@ -162,7 +162,7 @@ bool MultiMP4Reader::readSample() {
         if (!frame) {
             continue;
         }
-        // WarnL << "frame pts: " << frame->pts();
+        // ErrorL << "frame pts: " << frame->pts();
 
 #if 1
         auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
@@ -181,13 +181,15 @@ bool MultiMP4Reader::readSample() {
 
         // 倍速
 #if 1   // 调整时间戳
-        if(_speed>1){
+        // if(_speed>1){
             frameFromPtr->setPTS(frameFromPtr->pts()/_speed);
             frameFromPtr->setDTS(frameFromPtr->dts()/_speed);
-        }
+        // }
 #endif
 
 #endif
+
+        // WarnL << "frame pts: " << frame->pts();
        
         if (_muxer) {
             _muxer->inputFrame(frame);
