@@ -69,15 +69,8 @@ private:
     int                                       _currentIndex = 0;
     bool                                      _paused = false;
     bool                                      _have_video = false;
-    bool                                      _read_mp4_item_done = false;
     float                                     _speed = 1.0;
     uint64_t                                  _last_dts = 0;
-    uint64_t                                  _last_pts = 0;
-    uint64_t                                  _capture_dts = 0;
-    uint64_t                                  _capture_pts = 0;
-    uint64_t                                  _read_sample_last_dts = 0;
-    uint64_t                                  _read_sample_last_dts_v = 0;
-    uint64_t                                  _read_sample_last_dts_a = 0;
     bool                                      _start_read_last_file = true;
     uint64_t                                  _start_time_of_last_file = 0;
     uint32_t                                  _file_repeat = false;

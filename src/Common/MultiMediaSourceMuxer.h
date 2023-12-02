@@ -135,7 +135,14 @@ public:
     const MediaTuple &getMediaTuple() const;
     std::string shortUrl() const;
     
-    int64_t _current_stamp = 0;
+
+    /**
+     * 获取当前的时间戳
+     */
+    int64_t getCurrentStamp(){
+        return _current_stamp;
+    }
+    
 
 protected:
     /////////////////////////////////MediaSink override/////////////////////////////////
@@ -180,6 +187,7 @@ private:
     HlsFMP4Recorder::Ptr _hls_fmp4;
     toolkit::EventPoller::Ptr _poller;
     RingType::Ptr _ring;
+    int64_t _current_stamp = 0;
 
     //对象个数统计
     toolkit::ObjectStatistic<MultiMediaSourceMuxer> _statistic;
