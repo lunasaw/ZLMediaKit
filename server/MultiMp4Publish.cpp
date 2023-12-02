@@ -36,7 +36,7 @@ int MultiMp4Publish::Publish(std::string callId, std::string startTime, std::str
     }
 
     auto poller = EventPollerPool::Instance().getPoller();
-    if(createPusher(callId, poller, RTSP_SCHEMA, DEFAULT_VHOST, app, stream, filePathVec, url, atof(speed.c_str())<1.0f?1.0f:atof(speed.c_str()))<0){
+    if(createPusher(callId, poller, RTSP_SCHEMA, DEFAULT_VHOST, app, stream, filePathVec, url, atof(speed.c_str())/*atof(speed.c_str())<1.0f?1.0f:atof(speed.c_str())*/)<0){
         errMsg = "推流失败";
         WarnL << errMsg;
         return -1;
