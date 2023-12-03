@@ -31,7 +31,7 @@ std::shared_ptr<DiskSpaceManager> DiskSpaceManager::GetCreate()
 bool DiskSpaceManager::StartService(std::string recordPath, float thresholdMB, float DetectionCycle)
 {
     _timer = nullptr;
-    float timerSec = 3;
+    float timerSec = 1;
     std::string path = recordPath;
     float threshold = _thresholdMB = thresholdMB;
     InfoL << "StartService threshold " << threshold <<std::endl;
