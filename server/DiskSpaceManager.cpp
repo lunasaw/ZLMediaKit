@@ -37,7 +37,8 @@ bool DiskSpaceManager::StartService(std::string recordPath, float thresholdMB, f
     InfoL << "StartService threshold " << threshold <<std::endl;
     _poller = toolkit::WorkThreadPool::Instance().getPoller();
     _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold]() {
-        if(_getDirSizeInMB(path) >= threshold){
+        if(getUsedDisSpace(path) >= threshold){
+        // if(_getDirSizeInMB(path) >= threshold){
             _deleteOldestFile(path);
         }
         return true;
