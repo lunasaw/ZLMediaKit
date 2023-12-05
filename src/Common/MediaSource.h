@@ -205,6 +205,7 @@ public:
     ProtocolOption(const MAP &allArgs) : ProtocolOption() {
         load(allArgs);
     }
+
     template <typename MAP>
     void load(const MAP &allArgs) {
 #define GET_OPT_VALUE(key) getArgsValue(allArgs, #key, key)
