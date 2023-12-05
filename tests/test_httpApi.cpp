@@ -28,7 +28,7 @@ namespace mediakit {
 ////////////HTTP配置///////////
 namespace Http {
 #define HTTP_FIELD "http."
-#define HTTP_PORT 80
+#define HTTP_PORT 9092
 const char kPort[] = HTTP_FIELD"port";
 #define HTTPS_PORT 443
 extern const char kSSLPort[] = HTTP_FIELD"sslport";

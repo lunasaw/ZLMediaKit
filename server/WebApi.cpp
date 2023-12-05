@@ -41,6 +41,7 @@
 #include "IPAddress.h"
 #if defined(ENABLE_RTPPROXY)
 #include "Rtp/RtpServer.h"
+#include "Record/MP4Reader.h"
 #endif
 #ifdef ENABLE_WEBRTC
 #include "../webrtc/WebRtcPlayer.h"
@@ -68,6 +69,7 @@ const string kApiDebug = API_FIELD"apiDebug";
 const string kSecret = API_FIELD"secret";
 const string kSnapRoot = API_FIELD"snapRoot";
 const string kDefaultSnap = API_FIELD"defaultSnap";
+const string kDownloadRoot = API_FIELD"downloadRoot";
 
 static onceToken token([]() {
     mINI::Instance()[kApiDebug] = "1";
@@ -1719,7 +1721,7 @@ void installWebApi() {
 
                 Json::Value obj;
                 dirObj["stream"] = streamDirName;
-                
+
                 for (const auto& dateDir : std::filesystem::directory_iterator(streamDir)) {
                     if (dateDir.is_directory()) {
                         std::string dateDirName = dateDir.path().filename().string();
@@ -2026,6 +2028,74 @@ void installWebApi() {
     });
 #endif
 
+    api_regist("/index/api/loadMP4File", [](API_ARGS_MAP) {
+        CHECK_SECRET();
+        CHECK_ARGS("vhost", "app", "stream", "file_path");
+
+        ProtocolOption option;
+        // 默认解复用mp4不生成mp4
+        option.enable_mp4 = false;
+        // 但是如果参数明确指定开启mp4, 那么也允许之
+        option.load(allArgs);
+        // 强制无人观看时自动关闭
+        option.auto_close = true;
+
+        auto reader = std::make_shared<MP4Reader>(allArgs["vhost"], allArgs["app"], allArgs["stream"], allArgs["file_path"], option);
+        // sample_ms设置为0，从配置文件加载；file_repeat可以指定，如果配置文件也指定循环解复用，那么强制开启
+        reader->startReadMP4(0, true, allArgs["file_repeat"]);
+    });
+
+    GET_CONFIG_FUNC(std::set<std::string>, download_roots, API::kDownloadRoot, [](const string &str) -> std::set<std::string> {
+        std::set<std::string> ret;
+        auto vec = toolkit::split(str, ";");
+        for (auto &item : vec) {
+            auto root = File::absolutePath(item, "", true);
+            ret.emplace(std::move(root));
+        }
+        return ret;
+    });
+
+    api_regist("/index/api/downloadFile", [](API_ARGS_MAP_ASYNC) {
+        CHECK_ARGS("file_path");
+        auto file_path = allArgs["file_path"];
+
+        if (file_path.find("..") != std::string::npos) {
+            invoker(401, StrCaseMap{}, "You can not access parent directory");
+            return;
+        }
+        bool safe = false;
+        for (auto &root : download_roots) {
+            if (start_with(file_path, root)) {
+                safe = true;
+                break;
+            }
+        }
+        if (!safe) {
+            invoker(401, StrCaseMap{}, "You can not download files outside the root directory");
+            return;
+        }
+
+        // 通过on_http_access完成文件下载鉴权，请务必确认访问鉴权url参数以及访问文件路径是否合法
+        HttpSession::HttpAccessPathInvoker file_invoker = [allArgs, invoker](const string &err_msg, const string &cookie_path_in, int life_second) mutable {
+            if (!err_msg.empty()) {
+                invoker(401, StrCaseMap{}, err_msg);
+            } else {
+                StrCaseMap res_header;
+                auto save_name = allArgs["save_name"];
+                if (!save_name.empty()) {
+                    res_header.emplace("Content-Disposition", "attachment;filename=\"" + save_name + "\"");
+                }
+                invoker.responseFile(allArgs.getParser().getHeader(), res_header, allArgs["file_path"]);
+            }
+        };
+
+        bool flag = NOTICE_EMIT(BroadcastHttpAccessArgs, Broadcast::kBroadcastHttpAccess, allArgs.getParser(), file_path, false, file_invoker, sender);
+        if (!flag) {
+            // 文件下载鉴权事件无人监听，不允许下载
+            invoker(401, StrCaseMap {}, "None http access event listener");
+        }
+    });
+
     ////////////以下是注册的Hook API////////////
     api_regist("/index/hook/on_publish",[](API_ARGS_JSON){
         //开始推流事件
@@ -2132,7 +2202,7 @@ void installWebApi() {
     });
 
     api_regist("/index/hook/on_record_mp4",[](API_ARGS_JSON){
-        //录制mp4分片完毕事件        
+        //录制mp4分片完毕事件
     });
 
     api_regist("/index/hook/on_shell_login",[](API_ARGS_JSON){
