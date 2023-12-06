@@ -238,6 +238,11 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
     FILE *fp;
     char buffer[1024];
     InfoL  << "usedDiskSpace  " << recordPath << std::endl;
+    std::filesystem::path record_path(recordPath);
+    if (!std::filesystem::exists(record_path)) {
+        WarnL << "Path [ " << recordPath << " ] does not exist!";
+        return 0;
+    }
     std::string path = recordPath;
 
     //获取路径上的容量
