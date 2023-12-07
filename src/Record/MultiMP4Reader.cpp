@@ -25,6 +25,7 @@ MultiMP4Reader::MultiMP4Reader(const std::string &vhost,
     if (_tuple.stream.empty()) {
         return;
     }
+    _demuxer = std::make_shared<MP4Demuxer>();
     loadMP4(_currentIndex);
 }
 
@@ -44,7 +45,7 @@ bool MultiMP4Reader::loadMP4(int index) {
         DebugL << "not found path:" << tuple.path;
         return false;
     }
-    _demuxer = std::make_shared<MP4Demuxer>();
+
     _demuxer->openMP4(tuple.path);
 
     auto tracks = _demuxer->getTracks(false);
@@ -141,6 +142,7 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
 
 void MultiMP4Reader::stopReadMP4() {
     _timer = nullptr;
+    _demuxer->closeMP4();
 }
 
 bool MultiMP4Reader::readSample() {
@@ -198,6 +200,7 @@ bool MultiMP4Reader::readSample() {
             return false;
         }
 
+        _demuxer->closeMP4();
         if(loadMP4(_currentIndex)) {
             _start_read_last_file = true;
             _start_time_of_last_file = 0;
