@@ -91,6 +91,7 @@ private:
                 std::vector<std::string> files;
                 for (const auto& file : std::filesystem::directory_iterator(entry.path())) {
                     if (file.is_regular_file()) {
+                        if(isHidden(file.path().filename().string())) continue;
                         files.push_back(file.path().filename().string());
                     }
                 }
@@ -122,6 +123,10 @@ private:
         std::string hhmmss = start_time_ans[1];
         iPlayStartTime = string2second(hhmmss);
 
+        if(folder_map.find(playStartDate) == folder_map.end()){
+            return playFiles;
+        }
+
         // 判断第一个点播开始时刻是否在当天的第一个文件时间段内
         std::vector<std::string> infos = split(folder_map[playStartDate].front(), re_vec[1]);//"[-.]+"
         std::string firstFileStartTime = infos[0];
@@ -130,15 +135,24 @@ private:
             // 否: 从前一天的最后一个文件开始播放
             // playStartDate -= 1;
             std::string yestaday = dateSub(playStartDate, 1);
+            if(folder_map.find(yestaday) == folder_map.end()){
+                return playFiles;
+            }
             std::string curFile = folder_map.at(yestaday).back();
-            std::string file_path = folder_path+"/"+yestaday+"/"+ curFile;
-            playFiles.push_back(file_path);
-            std::vector<std::string> infos = split(curFile, re_vec[1]);//"[-.]+"
-            std::string curFileStartTime = infos[0];
+            std::vector<std::string> infoss = split(curFile, re_vec[1]);//"[-.]+"
+            std::string yestodayLastFileEndTime = infoss[1];
+            int iYestodayLastFileEndTime = string2second2(yestodayLastFileEndTime);
+            if(iPlayStartTime < iYestodayLastFileEndTime){
+                // 播放的时间点在昨天的最后一个文件的时间段内
+                std::string file_path = folder_path+"/"+yestaday+"/"+ curFile;
+                playFiles.push_back(file_path);
+                std::vector<std::string> infos = split(curFile, re_vec[1]);//"[-.]+"
+                std::string curFileStartTime = infos[0];
 
-            int iCurFileStartTime = string2second2(curFileStartTime);
-            offset = 24*60*60 - iCurFileStartTime;
-            return playFiles;
+                int iCurFileStartTime = string2second2(curFileStartTime);
+                offset = 24*60*60 - iCurFileStartTime;
+                return playFiles;
+            }
         }else{
             // 是: 从当天的第一个文件开始播放
         }

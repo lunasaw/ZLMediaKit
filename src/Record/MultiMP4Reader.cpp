@@ -6,8 +6,7 @@
 #include "Common/config.h"
 #include "Thread/WorkThreadPool.h"
 #include "Util/File.h"
-
-#define MAX(x,y) (x>y?x:y)
+#include "Common/macros.h"
 
 using namespace std;
 using namespace toolkit;
@@ -26,6 +25,7 @@ MultiMP4Reader::MultiMP4Reader(const std::string &vhost,
     if (_tuple.stream.empty()) {
         return;
     }
+    _demuxer = std::make_shared<MP4Demuxer>();
     loadMP4(_currentIndex);
 }
 
@@ -45,7 +45,7 @@ bool MultiMP4Reader::loadMP4(int index) {
         DebugL << "not found path:" << tuple.path;
         return false;
     }
-    _demuxer = std::make_shared<MP4Demuxer>();
+
     _demuxer->openMP4(tuple.path);
 
     auto tracks = _demuxer->getTracks(false);
@@ -117,7 +117,6 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
                 bool flag = strong_self->readSample();
 
                 if(!flag) {
-                    DebugL << "read sample:0";
                     strong_self->_end_CB();
                 }
                 return flag;
@@ -132,7 +131,6 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
                 lock_guard<recursive_mutex> lck(strong_self->_mtx);
                 bool flag = strong_self->readSample();
                 if(!flag) {
-                    DebugL << "read sample:0";
                     strong_self->_end_CB();
                 }
                 return flag;
@@ -144,6 +142,7 @@ void MultiMP4Reader::startReadMP4(uint64_t sample_ms, bool ref_self, bool file_r
 
 void MultiMP4Reader::stopReadMP4() {
     _timer = nullptr;
+    _demuxer->closeMP4();
 }
 
 bool MultiMP4Reader::readSample() {
@@ -162,9 +161,8 @@ bool MultiMP4Reader::readSample() {
         if (!frame) {
             continue;
         }
-        // WarnL << "frame pts: " << frame->pts();
+        // ErrorL << "frame pts: " << frame->pts();
 
-#if 1
         auto frameFromPtr = std::dynamic_pointer_cast<FrameFromPtr>(frame);
         MultiMediaSourceTuple tuple = _current_source_tuple;
         if(tuple.endMs != 0) {
@@ -174,32 +172,35 @@ bool MultiMP4Reader::readSample() {
             }
             if(frame->dts() - _start_time_of_last_file >= tuple.endMs) {
                 eof = true;
-                DebugL << "readFrame 超过结束时间限制，强制 eof 结束";
+                DebugL << "最后一个文件读取结束: End of all files.";
                 break;
             }
         }
 
         // 倍速
-        frameFromPtr->setPTS(frameFromPtr->pts()/_speed);
-        frameFromPtr->setDTS(frameFromPtr->dts()/_speed);
+#if 1   // 调整时间戳
+        // if(_speed>1){
+            frameFromPtr->setPTS(frameFromPtr->pts()/_speed);
+            frameFromPtr->setDTS(frameFromPtr->dts()/_speed);
+        // }
 #endif
+
+
+        // WarnL << "frame pts: " << frame->pts();
        
         if (_muxer) {
             _muxer->inputFrame(frame);
-            _last_dts = _muxer->_current_stamp;
+            _last_dts = _muxer->getCurrentStamp();
         }
         
     }
 
     if(eof) {
         if(isPlayEof()) {
-            DebugL << "play eof.";
             return false;
         }
-        DebugL << "MultiMP4Reader readSample EOF."
-               << ",_file_repeat:" << _file_repeat
-               << ", isPlayEof:" << isPlayEof();
 
+        _demuxer->closeMP4();
         if(loadMP4(_currentIndex)) {
             _start_read_last_file = true;
             _start_time_of_last_file = 0;

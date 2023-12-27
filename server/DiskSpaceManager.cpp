@@ -31,13 +31,14 @@ std::shared_ptr<DiskSpaceManager> DiskSpaceManager::GetCreate()
 bool DiskSpaceManager::StartService(std::string recordPath, float thresholdMB, float DetectionCycle)
 {
     _timer = nullptr;
-    float timerSec = 3;
+    float timerSec = 1;
     std::string path = recordPath;
     float threshold = _thresholdMB = thresholdMB;
     InfoL << "StartService threshold " << threshold <<std::endl;
     _poller = toolkit::WorkThreadPool::Instance().getPoller();
     _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold]() {
-        if(_getDirSizeInMB(path) >= threshold){
+        if(getUsedDisSpace(path) >= threshold){
+        // if(_getDirSizeInMB(path) >= threshold){
             _deleteOldestFile(path);
         }
         return true;
@@ -236,21 +237,25 @@ float DiskSpaceManager::getAvailableDiskCap(std::string recordPath) {
 int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
     FILE *fp;
     char buffer[1024];
-    InfoL  << "usedDiskSpace  " << recordPath << std::endl;
+    // InfoL  << "usedDiskSpace  " << recordPath << std::endl;
+    std::filesystem::path record_path(recordPath);
+    if (!std::filesystem::exists(record_path)) {
+        WarnL << "Path [ " << recordPath << " ] does not exist!";
+        return 0;
+    }
     std::string path = recordPath;
 
     //获取路径上的容量
     std::string cmp_pre = "df -m ";
     std::string cmd = cmp_pre + " " + path;
-    InfoL  <<  "cmd: " <<cmd <<std::endl;
+    // InfoL  <<  "cmd: " <<cmd <<std::endl;
     fp = popen(cmd.c_str() , "r");
     if (fp == NULL) {
-        printf("Failed to run command\n");
-        InfoL  <<  "Failed to run command " <<std::endl;
+        ErrorL  <<  "Failed to run command " <<std::endl;
         return 0;
     }
     while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        InfoL  <<  "buffer " << buffer << std::endl;
+        DebugL << buffer;
     }
 
     pclose(fp);
@@ -263,7 +268,7 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
     while (used >> word) {
         usedVec.push_back(word);
     }
-    InfoL  << "used :" << usedVec[2]<< std::endl;
+    // InfoL  << "used :" << usedVec[2]<< std::endl;
     int currentUsed;
     currentUsed = atoi(usedVec[2].c_str());
     //使用正则表达式获取容量大小
@@ -275,7 +280,7 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
 //        currentUsed = std::stoi(num_str);
 //    }
 //    std::cout << currentUsed << std::endl;
-    InfoL  << "currentUsed :" << currentUsed   <<  "  MB"<< std::endl;
+    DebugL  << "currentUsed :" << currentUsed   <<  "  MB";
     return currentUsed;
 }
 
