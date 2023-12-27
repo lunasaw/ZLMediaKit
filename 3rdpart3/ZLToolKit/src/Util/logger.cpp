@@ -167,7 +167,7 @@ static inline const char *getFileName(const char *file) {
 }
 
 static inline const char *getFileNameDate(const char *file) {
-    auto pos = strrchr(file, '.');
+    auto pos = strchr(file, '.');
 #ifdef _WIN32
     if(!pos){
         pos = strrchr(file, '\\');
@@ -486,15 +486,18 @@ static const auto s_second_per_day = 24 * 60 * 60;
 static string getLogFilePath(const string &dir, time_t second, int32_t index) {
     auto tm = getLocalTime(second);
     char buf[64];
-    // snprintf(buf, sizeof(buf), "MediaServer.log.%d-%02d-%02d_%02d", 1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday, index);
-    snprintf(buf, sizeof(buf), "MediaServer.log.%d-%02d-%02d", 1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday);
+    // snprintf(buf, sizeof(buf), "wd-zlmediakit.log.%d-%02d-%02d_%02d", 1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday, index);
+    snprintf(buf, sizeof(buf), "wd-zlmediakit.%d-%02d-%02d.log", 1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday);
     return dir + buf;
 }
 
 //根据日志文件名返回GMT UNIX时间戳
 static time_t getLogFileTime(const string &full_path) {
     auto name = getFileName(full_path.data());
-    auto date = getFileNameDate(name);
+    auto date_log = getFileNameDate(name);
+    char date[11];
+    strncpy(date, date_log, 10); // 从 "." 的下一个字符开始复制 10 个字符到 date 数组中
+    date[10] = '\0'; // 字符串结尾符
     // printf("date:%s\n", date);
     struct tm tm{0};
     if (!strptime(date, "%Y-%m-%d", &tm)) {
@@ -526,7 +529,7 @@ FileChannel::FileChannel(const string &name, const string &dir, LogLevel level) 
     File::scanDir(_dir, [this](const string &path, bool isDir) -> bool {
         // printf("path:%s\n", path.c_str());
         auto name = getFileName(path.data());
-        if (!isDir && start_with(name, "MediaServer.")) {
+        if (!isDir && start_with(name, "wd-zlmediakit.")) {
             _log_file_map.emplace(path);
         }
         return true;
@@ -545,7 +548,7 @@ FileChannel::FileChannel(const string &name, const string &dir, LogLevel level) 
             int tm_year;  // years since 1900
             uint32_t index;
             //今天第几个文件
-            int count = sscanf(name, "MediaServer.log.%d-%02d-%02d_%d.log", &tm_year, &tm_mon, &tm_mday, &index);
+            int count = sscanf(name, "wd-zlmediakit.%d-%02d-%02d_%d.log", &tm_year, &tm_mon, &tm_mday, &index);
             if (count == 4) {
                 _index = index >= _index ? index : _index;
             }
