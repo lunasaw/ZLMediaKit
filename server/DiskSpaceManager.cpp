@@ -223,7 +223,7 @@ float DiskSpaceManager::getSystemDisk(std::string recordPath) {
 float DiskSpaceManager::getAvailableDiskCap(std::string recordPath) {
     const char * path = recordPath.c_str();
     struct statvfs buf ;
-    InfoL << "getAvailableDiskCap" << recordPath <<std::endl;
+    // InfoL << "getAvailableDiskCap" << recordPath <<std::endl;
     if(statvfs(path,&buf) == -1){
         //查不到挂在的路径分区大小
         perror("statbuf");
@@ -231,7 +231,7 @@ float DiskSpaceManager::getAvailableDiskCap(std::string recordPath) {
         return 0;
     }
     _fileAvailable = (double)buf.f_bavail * buf.f_frsize / (1024 * 1024 * 1024);
-    InfoL  << " _fileAvailable " <<_fileAvailable << std::endl;
+    // InfoL  << " _fileAvailable " <<_fileAvailable << std::endl;
     return _fileAvailable;
 }
 int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
@@ -255,7 +255,7 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
         return 0;
     }
     while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        DebugL << buffer;
+        // DebugL << buffer;
     }
 
     pclose(fp);
@@ -280,7 +280,7 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
 //        currentUsed = std::stoi(num_str);
 //    }
 //    std::cout << currentUsed << std::endl;
-    DebugL  << "currentUsed :" << currentUsed   <<  "  MB";
+    // DebugL  << "currentUsed :" << currentUsed   <<  "  MB";
     return currentUsed;
 }
 
