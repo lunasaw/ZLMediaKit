@@ -280,7 +280,7 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
 //        currentUsed = std::stoi(num_str);
 //    }
 //    std::cout << currentUsed << std::endl;
-    // DebugL  << "currentUsed :" << currentUsed   <<  "  MB";
+    DebugL  << "磁盘容量当前使用 :" << currentUsed   <<  "  MB";
     return currentUsed;
 }
 
