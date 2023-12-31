@@ -187,8 +187,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
         bool result  = std::filesystem::remove(std::filesystem::path(minDir) / (minFile + ".mp4"));
         if(result){
             NOTICE_EMIT(KBroadcastDeleteFileArgs, Broadcast::KBroadcastDeleteFile, appDirName, needDeleteStream, needDeleteDate, minFile + ".mp4");
-            InfoL << "已删除日期和时间都最久远的文件 "  << minDir << "/" << minFile << ".mp4"
-                  << ",result:"<<result << ", errno:" << strerror(errno);
+            InfoL << "已删除日期和时间都最久远的文件 "  << minDir << "/" << minFile << ".mp4";
         } else{
             InfoL << "remove file failed " << strerror(errno) << std::endl;
         }
