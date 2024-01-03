@@ -163,8 +163,10 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                     if (streamDirName == "." || streamDirName == "..") continue;
                     if(_removeEmptyDirectory(path +"/"+ appDirName+ "/" +streamDirName)==0) continue;
 
-                    // 如果目录数量（已经存储了几天的数据）<= _nDays, 则不需要删除（这种情况是为了间隔多天开机运行的场景）
-                    if(_getFileNumInDirectory(streamDir.path())<=_nDays && _nDays!=-1) continue;
+                    // 如果目录数量（已经存储了几天的数据）<= 8, 则不需要删除
+                    //（这种情况是为了间隔多天开机运行的场景；当按阈值管理时，至少保存 7+1 天）
+                    // if(_getFileNumInDirectory(streamDir.path())<=_nDays) continue;
+                    if(_getFileNumInDirectory(streamDir.path())<=8) continue;
                     
                     // 找出最久远的目录
                     std::string oldest_directory;
