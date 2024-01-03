@@ -38,10 +38,10 @@ bool DiskSpaceManager::StartService(std::string recordPath, CONTROL_MODE_E ctrl_
     _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold, ctrl_mode]() {
         InfoL << "管理模式: " <<  ctrl_mode;
         if(ctrl_mode == THRESHOLD_CTRL){
-            // if(getUsedDisSpace(path) >= threshold){
+            if(getUsedDisSpace(path) >= threshold){
                 _nDays = -1;
                 _deleteOldestFile(path);
-            // }
+            }
         }else if(ctrl_mode == DAYS_CTRL){
             if(getUsedDisSpace(path) >= threshold){
                 // 如果磁盘使用超过阈值，则保存的录制文件天数减 1, 但不能少于 5+1 天
@@ -300,10 +300,10 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
     while (used >> word) {
         usedVec.push_back(word);
     }
-    // InfoL  << "used :" << usedVec[2]<< std::endl;
+    // InfoL  << "used :" << usedVec[0]<< " " << usedVec[1]<< " " << usedVec[2]<< " "<<usedVec[3]<< " "<< usedVec[4]<< " "<<  std::endl;
     int currentUsed;
     currentUsed = atoi(usedVec[2].c_str());
-    DebugL  << "磁盘容量当前使用 :" << currentUsed/1024 <<  " GB";
+    DebugL  << "磁盘容量当前使用 :" << usedVec[4] << " [" << currentUsed/1024 <<  " GB]" ;
     return currentUsed;
 }
 
