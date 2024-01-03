@@ -15,15 +15,20 @@
 #include "Poller/Timer.h"
 
 // #define DEBUG_RECORD_MANAGER
-#define DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE  0.80f //默认固定开始清理的阈值，当硬盘容量在大于85%时启动清除
+#define DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE  0.85f //默认固定开始清理的阈值，当硬盘容量在大于85%时启动清除
 class DiskSpaceManager
 {
 public:
     DiskSpaceManager();
     ~DiskSpaceManager();
 
+    typedef enum {
+        DAYS_CTRL = 1,
+        THRESHOLD_CTRL = 2,
+    }CONTROL_MODE_E;
+
     static std::shared_ptr<DiskSpaceManager> GetCreate();
-    bool StartService(std::string recordPath);
+    bool StartService(std::string recordPath, CONTROL_MODE_E ctrl_mode = THRESHOLD_CTRL);
     double GetStorageSpace(std::string recordPath);
     float GetThreshold() { return _thresholdMB; }
     float getSystemDisk(std::string recordPath);//MB

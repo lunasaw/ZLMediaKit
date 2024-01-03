@@ -27,7 +27,7 @@ std::shared_ptr<DiskSpaceManager> DiskSpaceManager::GetCreate()
     return _recordManager;
 }
 
-bool DiskSpaceManager::StartService(std::string recordPath)
+bool DiskSpaceManager::StartService(std::string recordPath, CONTROL_MODE_E ctrl_mode)
 {
     _timer = nullptr;
     float timerSec = 60*10; // 10分钟定时监测录制的文件
@@ -35,17 +35,21 @@ bool DiskSpaceManager::StartService(std::string recordPath)
     float threshold = _thresholdMB = getSystemDisk(path) * 1024 * DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE;
     InfoL << "配置的存储阈值: " << threshold/1024 << " GB [ " << DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE*100 << "% ]";
     _poller = toolkit::WorkThreadPool::Instance().getPoller();
-    _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold]() {
-        if(getUsedDisSpace(path) >= threshold){
-            // 如果磁盘使用超过阈值，则保存的录制文件天数减 1, 但不能少于 5+1 天
-            if(_nDays>5) _nDays--;
-            InfoL << "磁盘使用量超过的阈值, 录制文件的天数为:" << _nDays;
-        }else{
-            _nDays = 8; // 如果磁盘空间足够，则保存 7+1 天的文件
-            InfoL << "磁盘空间足够, 录制文件的天数为:" << _nDays;
+    _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold, ctrl_mode]() {
+        if(ctrl_mode == THRESHOLD_CTRL){
+            _nDays = -1;
+            _deleteOldestFile(path);
+        }else if(ctrl_mode == DAYS_CTRL){
+            if(getUsedDisSpace(path) >= threshold){
+                // 如果磁盘使用超过阈值，则保存的录制文件天数减 1, 但不能少于 5+1 天
+                if(_nDays>5) _nDays--;
+                InfoL << "磁盘使用量超过的阈值, 录制文件的天数为:" << _nDays;
+            }else{
+                _nDays = 8; // 如果磁盘空间足够，则保存 7+1 天的文件
+                InfoL << "磁盘空间足够, 录制文件的天数为:" << _nDays;
+            }
+            _deleteOldestFile(path);
         }
-        _deleteOldestFile(path);
-        
         return true;
     }, _poller);
     return true;
@@ -160,7 +164,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                     if(_removeEmptyDirectory(path +"/"+ appDirName+ "/" +streamDirName)==0) continue;
 
                     // 如果目录数量（已经存储了几天的数据）<= _nDays, 则不需要删除（这种情况是为了间隔多天开机运行的场景）
-                    if(_getFileNumInDirectory(streamDir.path())<=_nDays) continue;
+                    if(_getFileNumInDirectory(streamDir.path())<=_nDays && _nDays!=-1) continue;
                     
                     // 找出最久远的目录
                     std::string oldest_directory;
@@ -175,7 +179,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                     }
 
                     dateDirName = oldest_directory;
-                    // 如果日期距离今天 ≥ 8 天，则这个目录的文件都删掉
+                    // 如果日期距离今天 ≥ _nDays 天，则这个目录的文件都删掉（如果_nDays==-1，则由直接由阈值控制，删除最久远的日期目录）
                     bool need_directly_delete = _OverNdays(dateDirName, _nDays);
                     if(need_directly_delete){
                         // 如果这是一个空目录，那么直接删除（先把隐藏文件删掉，否则目录为非空）
@@ -207,7 +211,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                             }
 
                             // hook， 这个文件之前录制的都将要删除了
-                            InfoL << "EMIT HOOK NOTICE(delete file): " << needDeleteDate+"/" << maxFile + ".mp4";
+                            InfoL << "EMIT HOOK NOTICE(delete file): " << appDirName+"/"+needDeleteStream+"/"+needDeleteDate+"/" << maxFile + ".mp4";
                             NOTICE_EMIT(KBroadcastDeleteFileArgs, Broadcast::KBroadcastDeleteFile, appDirName, needDeleteStream, needDeleteDate, maxFile + ".mp4");
 
                             // 删除这个 dateDirName 目录
@@ -216,7 +220,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                             if(n==0){
                                 InfoL << "路径不存在: " << rm_path;
                             }else{
-                                InfoL << "已删除目录:[ "  << dateDirName << " ]";
+                                InfoL << "已删除目录:[ "  << appDirName+"/"+streamDirName+"/"+dateDirName << " ]";
                             }
                         }
                     }
@@ -302,6 +306,8 @@ int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
 
 bool DiskSpaceManager::_OverNdays(const std::string dir_name, int nDays)
 {
+    if(nDays == -1) return true; // 如果 nDays==-1，不由天数控制，固定返回 true
+
     // 获取当前时间戳
     time_t now = time(nullptr);
     struct tm* t = localtime(&now);
