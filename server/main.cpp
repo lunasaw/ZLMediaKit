@@ -238,7 +238,7 @@ int start_main(int argc,char *argv[]) {
         Logger::Instance().add(std::make_shared<ConsoleChannel>("ConsoleChannel", logLevel));
 #if !defined(ANDROID)
         std::string logDir = "/home/www/logs/wd-zlmediakit";
-        auto fileChannel = std::make_shared<FileChannel>("FileChannel", logDir, logLevel);
+        auto fileChannel = std::make_shared<FileChannel>("FileChannel", logDir, LDebug);
         // 日志最多保存天数
         fileChannel->setMaxDay(cmd_main["max_day"]);
         fileChannel->setFileMaxCount(cmd_main["log-slice"]);
