@@ -1,6 +1,5 @@
 #include "DiskSpaceManager.h"
 #include "Thread/WorkThreadPool.h"
-#include <sys/statvfs.h>
 #include <iomanip>
 #include <Common/config.h>
 #include <Util/NoticeCenter.h>
@@ -29,21 +28,19 @@ std::shared_ptr<DiskSpaceManager> DiskSpaceManager::GetCreate()
 
 bool DiskSpaceManager::StartService(std::string recordPath, CONTROL_MODE_E ctrl_mode)
 {
-    _timer = nullptr;
     float timerSec = 30; // 30 秒定时监测录制的文件
-    std::string path = recordPath;
-    float threshold = _thresholdMB = getSystemDisk(path) * 1024 * DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE;
-    InfoL << "配置的存储阈值: " << threshold/1024 << " GB [ " << DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE*100 << "% ]";
+    _timer = nullptr;
     _poller = toolkit::WorkThreadPool::Instance().getPoller();
-    _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold, ctrl_mode]() {
-        InfoL << "管理模式: " <<  ctrl_mode;
+    _timer = std::make_shared<toolkit::Timer>(timerSec, [this, recordPath, ctrl_mode]() {
+        DiskInfo diskInfo(recordPath);
+        InfoL << "管理模式: " <<  ctrl_mode << ", 硬盘实际使用率: " << diskInfo._UsageRate*100 << "%";
         if(ctrl_mode == THRESHOLD_CTRL){
-            if(getUsedDisSpace(path) >= threshold){
+            if(diskInfo._UsageRate >= DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE){
                 _nDays = -1;
-                _deleteOldestFile(path);
+                _deleteOldestFile(recordPath);
             }
         }else if(ctrl_mode == DAYS_CTRL){
-            if(getUsedDisSpace(path) >= threshold){
+            if(diskInfo._UsageRate >= DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE){
                 // 如果磁盘使用超过阈值，则保存的录制文件天数减 1, 但不能少于 5+1 天
                 if(_nDays>5) _nDays--;
                 InfoL << "磁盘使用量超过的阈值, 录制文件的天数为:" << _nDays;
@@ -51,19 +48,15 @@ bool DiskSpaceManager::StartService(std::string recordPath, CONTROL_MODE_E ctrl_
                 _nDays = 8; // 如果磁盘空间足够，则保存 7+1 天的文件
                 InfoL << "磁盘空间足够, 录制文件的天数为:" << _nDays;
             }
-            _deleteOldestFile(path);
+            _deleteOldestFile(recordPath);
         }
         return true;
     }, _poller);
+
     return true;
 }
 
-double DiskSpaceManager::GetStorageSpace(std::string recordPath)
-{
-    return _getDirSizeInMB(recordPath);
-}
-
-double DiskSpaceManager::_getDirSizeInMB(std::string path)
+double DiskSpaceManager::GetStorageSpace(std::string path)
 {
     double dirSizeInBytes = 0.0;
     char buffer[1024];
@@ -84,9 +77,6 @@ double DiskSpaceManager::_getDirSizeInMB(std::string path)
     }
 
     pclose(pipe);
-#ifdef DEBUG_RECORD_MANAGER
-    std::cout << "dir[ " << path <<" ] size:" << dirSizeInBytes << " MB" << std::endl;
-#endif
     return dirSizeInBytes;
 }
 
@@ -101,9 +91,6 @@ int DiskSpaceManager::_removeEmptyDirectory(const std::string& path)
             return -1;
         }
     } else {
-#ifdef DEBUG_RECORD_MANAGER
-        std::cerr << "Directory is not empty: " << path << std::endl;
-#endif
         return -1;
     }
 }
@@ -231,80 +218,6 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
             }
         }
     }
-}
-
-float DiskSpaceManager::getSystemDisk(std::string recordPath) {
-    //todo 根据recordPath 确认挂在分区的总大小
-    const char * path = recordPath.c_str();
-    struct statvfs buf ;
-    // InfoL << recordPath <<std::endl;
-    if(statvfs(path,&buf) == -1){
-        //查不到挂在的路径分区大小
-        perror("statbuf");
-        std::cout << "getSystemDisk error : " <<path<<std::endl;
-        InfoL << "getSystemDisk error :" << path <<std::endl;
-        return 0;
-    }
-    _fileCapacity = (double)buf.f_blocks * buf.f_frsize / (1024 * 1024 * 1024) ;
-    _fileAvailable = (double)buf.f_bavail * buf.f_frsize / (1024 * 1024 * 1024);
-    double usedDiskCap = (double)((buf.f_blocks - buf.f_bfree) * buf.f_frsize /( 1024 * 1024 * 1024) );
-    InfoL<< "磁盘容量:" << _fileCapacity  << "  GB, 可用空间:" <<_fileAvailable << " GB, 已用空间:" << usedDiskCap <<" GB";
-
-    return _fileCapacity;
-}
-float DiskSpaceManager::getAvailableDiskCap(std::string recordPath) {
-    const char * path = recordPath.c_str();
-    struct statvfs buf ;
-    // InfoL << "getAvailableDiskCap" << recordPath <<std::endl;
-    if(statvfs(path,&buf) == -1){
-        //查不到挂在的路径分区大小
-        perror("statbuf");
-        InfoL << "getSystemDisk error :" << path <<std::endl;
-        return 0;
-    }
-    _fileAvailable = (double)buf.f_bavail * buf.f_frsize / (1024 * 1024 * 1024);
-    // InfoL  << " _fileAvailable " <<_fileAvailable << std::endl;
-    return _fileAvailable;
-}
-int DiskSpaceManager::getUsedDisSpace(std::string recordPath) {
-    FILE *fp;
-    char buffer[1024];
-    // InfoL  << "usedDiskSpace  " << recordPath << std::endl;
-    std::filesystem::path record_path(recordPath);
-    if (!std::filesystem::exists(record_path)) {
-        WarnL << "Path [ " << recordPath << " ] does not exist!";
-        return 0;
-    }
-    std::string path = recordPath;
-
-    //获取路径上的容量
-    std::string cmp_pre = "df -m ";
-    std::string cmd = cmp_pre + " " + path;
-    // InfoL  <<  "cmd: " <<cmd <<std::endl;
-    fp = popen(cmd.c_str() , "r");
-    if (fp == NULL) {
-        ErrorL  <<  "Failed to run command " <<std::endl;
-        return 0;
-    }
-    while (fgets(buffer, sizeof(buffer), fp) != NULL) {
-        // DebugL << buffer;
-    }
-
-    pclose(fp);
-
-    //从读取出来的数据中读取 容量 字符串
-    std::stringstream used(buffer);
-    std::vector<std::string> usedVec;
-    std::string word;
-
-    while (used >> word) {
-        usedVec.push_back(word);
-    }
-    // InfoL  << "used :" << usedVec[0]<< " " << usedVec[1]<< " " << usedVec[2]<< " "<<usedVec[3]<< " "<< usedVec[4]<< " "<<  std::endl;
-    int currentUsed;
-    currentUsed = atoi(usedVec[2].c_str());
-    DebugL  << "磁盘容量当前使用 :" << usedVec[4] << " [" << currentUsed/1024 <<  " GB]" ;
-    return currentUsed;
 }
 
 bool DiskSpaceManager::_OverNdays(const std::string dir_name, int nDays)
