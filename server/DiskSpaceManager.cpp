@@ -30,7 +30,7 @@ std::shared_ptr<DiskSpaceManager> DiskSpaceManager::GetCreate()
 bool DiskSpaceManager::StartService(std::string recordPath, CONTROL_MODE_E ctrl_mode)
 {
     _timer = nullptr;
-    float timerSec = 60*1; // 1分钟定时监测录制的文件
+    float timerSec = 30; // 30 秒定时监测录制的文件
     std::string path = recordPath;
     float threshold = _thresholdMB = getSystemDisk(path) * 1024 * DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE;
     InfoL << "配置的存储阈值: " << threshold/1024 << " GB [ " << DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE*100 << "% ]";
@@ -38,10 +38,10 @@ bool DiskSpaceManager::StartService(std::string recordPath, CONTROL_MODE_E ctrl_
     _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold, ctrl_mode]() {
         InfoL << "管理模式: " <<  ctrl_mode;
         if(ctrl_mode == THRESHOLD_CTRL){
-            if(getUsedDisSpace(path) >= threshold){
+            // if(getUsedDisSpace(path) >= threshold){
                 _nDays = -1;
                 _deleteOldestFile(path);
-            }
+            // }
         }else if(ctrl_mode == DAYS_CTRL){
             if(getUsedDisSpace(path) >= threshold){
                 // 如果磁盘使用超过阈值，则保存的录制文件天数减 1, 但不能少于 5+1 天
@@ -142,11 +142,10 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
     std::regex timestampPattern = fileDeleteRegexs[0];
 
     std::string appDirName;
-    std::string streamDirName;
-    std::string dateDirName;
 
     std::string needDeleteDate;
     std::string needDeleteStream;
+    std::string needDeleteAppDirName;
 
     //判断 record/ 目录下面的文件夹
     for (const auto& appDir : std::filesystem::directory_iterator(path)) {
@@ -162,7 +161,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
             for (const auto& streamDir : std::filesystem::directory_iterator(appDir)) {
                 // 流 034a0002004bb2cb5ffd__D01_CH01_Main
                 if (streamDir.is_directory()) {
-                    streamDirName = streamDir.path().filename().string();
+                    std::string streamDirName = streamDir.path().filename().string();
                     if (streamDirName == "." || streamDirName == "..") continue;
                     if(_removeEmptyDirectory(path +"/"+ appDirName+ "/" +streamDirName)==0) continue;
 
@@ -172,64 +171,63 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                     // if(_getFileNumInDirectory(streamDir.path())<=8) continue;
                     
                     // 找出最久远的目录
-                    std::string oldest_directory;
+                    
                     for (const auto& dateDir : std::filesystem::directory_iterator(streamDir)) {
                         // 目录(日期) 2023-11-01
                         if (dateDir.is_directory()) {
-                            dateDirName = dateDir.path().filename().string();
-                            if(oldest_directory.empty() || dateDirName < oldest_directory){
-                                oldest_directory = dateDirName;
-                            }
-                        }
-                    }
-
-                    dateDirName = oldest_directory;
-                    // 如果日期距离今天 ≥ _nDays 天，则这个目录的文件都删掉（如果_nDays==-1，则由直接由阈值控制，删除最久远的日期目录）
-                    bool need_directly_delete = _OverNdays(dateDirName, _nDays);
-                    if(need_directly_delete){
-                        // 如果这是一个空目录，那么直接删除（先把隐藏文件删掉，否则目录为非空）
-                        std::string dateDir_path = path+"/"+ appDirName+"/"+ streamDirName + "/" + dateDirName;
-                        _removeHiddenFiles(dateDir_path);
-                        if(_removeEmptyDirectory(dateDir_path)==0) continue;
-
-                        if (std::regex_match(dateDirName, fileDeleteRegexs[1])) {
-                            // 找出当天录制的最后一个文件
-                            for (const auto& mp4File : std::filesystem::directory_iterator(dateDir_path)) {
-                                // 文件名(时间段) 235954-000202.mp4
-                                if (mp4File.is_regular_file()) {
-                                    std::string fileName = mp4File.path().filename().string();
-                                    std::smatch match;
-                                    // printf("fileName:%s\n", fileName.c_str());
-                                    
-                                    if (std::regex_search(fileName, match, timestampPattern)) {
-                                        std::string timestamp = dateDirName + match[0].str();
-                                        std::string file = match[0].str();
-                                        // printf("timestamp:%s, maxTimestamp:%s\n", timestamp.c_str(), maxTimestamp.c_str());
-                                        if (maxTimestamp.empty() || timestamp > maxTimestamp) {
-                                            maxTimestamp = timestamp;
-                                            maxFile = file;
-                                            needDeleteDate = dateDirName;
-                                            needDeleteStream = streamDirName;
-                                        }
-                                    }
-                                }
-                            }
-
-                            // hook， 这个文件之前录制的都将要删除了
-                            InfoL << "EMIT HOOK NOTICE(delete file): " << appDirName+"/"+needDeleteStream+"/"+needDeleteDate+"/" << maxFile + ".mp4";
-                            NOTICE_EMIT(KBroadcastDeleteFileArgs, Broadcast::KBroadcastDeleteFile, appDirName, needDeleteStream, needDeleteDate, maxFile + ".mp4");
-
-                            // 删除这个 dateDirName 目录
-                            std::string rm_path = path+"/"+ appDirName+"/"+ streamDirName + "/" + dateDirName;
-                            std::uintmax_t n = std::filesystem::remove_all(rm_path.c_str());
-                            if(n==0){
-                                InfoL << "路径不存在: " << rm_path;
-                            }else{
-                                InfoL << "已删除目录:[ "  << appDirName+"/"+streamDirName+"/"+dateDirName << " ]";
+                            std::string dateDirName = dateDir.path().filename().string();
+                            if(needDeleteDate.empty() || dateDirName < needDeleteDate){
+                                needDeleteDate = dateDirName;
+                                needDeleteStream = streamDirName;
+                                needDeleteAppDirName = appDirName;
                             }
                         }
                     }
                 }
+            }
+        }
+    }
+
+    // 如果日期距离今天 ≥ _nDays 天，则这个目录的文件都删掉（如果_nDays==-1，则由直接由阈值控制，删除最久远的日期目录）
+    bool need_directly_delete = _OverNdays(needDeleteDate, _nDays);
+    if(need_directly_delete){
+        // 如果这是一个空目录，那么直接删除（先把隐藏文件删掉，否则目录为非空）
+        std::string dateDir_path = path+"/"+ needDeleteAppDirName+"/"+ needDeleteStream + "/" + needDeleteDate;
+        _removeHiddenFiles(dateDir_path);
+        if(_removeEmptyDirectory(dateDir_path)==0) return;
+
+        if (std::regex_match(needDeleteDate, fileDeleteRegexs[1])) {
+            // 找出当天录制的最后一个文件
+            for (const auto& mp4File : std::filesystem::directory_iterator(dateDir_path)) {
+                // 文件名(时间段) 235954-000202.mp4
+                if (mp4File.is_regular_file()) {
+                    std::string fileName = mp4File.path().filename().string();
+                    std::smatch match;
+                    // printf("fileName:%s\n", fileName.c_str());
+                    
+                    if (std::regex_search(fileName, match, timestampPattern)) {
+                        std::string timestamp = needDeleteDate + match[0].str();
+                        std::string file = match[0].str();
+                        // printf("timestamp:%s, maxTimestamp:%s\n", timestamp.c_str(), maxTimestamp.c_str());
+                        if (maxTimestamp.empty() || timestamp > maxTimestamp) {
+                            maxTimestamp = timestamp;
+                            maxFile = file;
+                        }
+                    }
+                }
+            }
+
+            // hook， 这个文件之前录制的都将要删除了
+            InfoL << "EMIT HOOK NOTICE(delete file): " << needDeleteAppDirName+"/"+needDeleteStream+"/"+needDeleteDate+"/" << maxFile + ".mp4";
+            NOTICE_EMIT(KBroadcastDeleteFileArgs, Broadcast::KBroadcastDeleteFile, needDeleteAppDirName, needDeleteStream, needDeleteDate, maxFile + ".mp4");
+
+            // 删除这个 needDeleteDate 目录
+            std::string rm_path = path+"/"+ needDeleteAppDirName+"/"+ needDeleteStream + "/" + needDeleteDate;
+            std::uintmax_t n = std::filesystem::remove_all(rm_path.c_str());
+            if(n==0){
+                InfoL << "路径不存在: " << rm_path;
+            }else{
+                InfoL << "已删除目录:[ "  << needDeleteAppDirName+"/"+needDeleteStream+"/"+needDeleteDate << " ]";
             }
         }
     }
