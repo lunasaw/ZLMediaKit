@@ -1871,7 +1871,8 @@ void installWebApi() {
         }
         invoker(200, headerOut, val.toStyledString());
     });
-
+    
+#if 0
     api_regist("/index/api/setStorageThreshold",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("threshold")
@@ -1889,6 +1890,7 @@ void installWebApi() {
         }
         invoker(200, headerOut, val.toStyledString());
     });
+#endif
 
     api_regist("/index/api/getStorageSpace",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();

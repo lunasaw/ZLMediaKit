@@ -427,13 +427,11 @@ int start_main(int argc,char *argv[]) {
             signal(SIGTERM, SIG_IGN);
             sem.post();
         });
-        /*  暂时注释掉磁盘清理入口 */
+
+        /*  磁盘管理 */
         std::shared_ptr<DiskSpaceManager> manager =  DiskSpaceManager ::GetCreate();
         std::string zlRecordPath = mINI::Instance()[mediakit::Protocol::kMP4SavePath] + "/" + "record";
-        float  currentFileCap = manager->getSystemDisk(zlRecordPath);//GB
-        float thresholdPercentage = manager->getDeleteVideoThreshold();
-        manager->StartService(zlRecordPath,currentFileCap * 1024 * thresholdPercentage,0.92);//剩余总容量的10%就会启动清理文件
-
+        manager->StartService(zlRecordPath);
 
 #if !defined(_WIN32)
         signal(SIGHUP, [](int) { mediakit::loadIniConfig(g_ini_file.data()); });
@@ -453,7 +451,7 @@ int start_main(int argc,char *argv[]) {
 
 #ifndef DISABLE_MAIN
 int main(int argc,char *argv[]) {
-        return start_main(argc,argv);
+    return start_main(argc,argv);
 }
 #endif //DISABLE_MAIN
 

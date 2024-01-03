@@ -22,21 +22,30 @@ public:
     DiskSpaceManager();
     ~DiskSpaceManager();
 
+    typedef enum {
+        DAYS_CTRL = 1,
+        THRESHOLD_CTRL = 2,
+    }CONTROL_MODE_E;
+
     static std::shared_ptr<DiskSpaceManager> GetCreate();
-    bool StartService(std::string recordPath, float thresholdMB, float DetectionCycle);
+    bool StartService(std::string recordPath, CONTROL_MODE_E ctrl_mode = THRESHOLD_CTRL);
     double GetStorageSpace(std::string recordPath);
     float GetThreshold() { return _thresholdMB; }
     float getSystemDisk(std::string recordPath);//MB
     float getAvailableDiskCap(std::string recordPath);
     int getUsedDisSpace(std::string recordPath);
-    void setDeleteVideoThreshold(float  thresholdPercentage);
-    float getDeleteVideoThreshold();
+    float getDeleteVideoThreshold() { return DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE; }
+    void DeleteOldestFile(const std::string& path){
+        _deleteOldestFile(path);
+    }
 
 private:
     double _getDirSizeInMB(std::string path);
     int _removeEmptyDirectory(const std::string& path);
     void _removeHiddenFiles(const std::string& path);
     void _deleteOldestFile(const std::string& path);
+    int _getFileNumInDirectory(std::string path);
+    bool _OverNdays(const std::string dir_name, int nDays = 8);
 
 private:
     static std::shared_ptr<DiskSpaceManager> _recordManager;
@@ -45,7 +54,7 @@ private:
     float _thresholdMB = 0.0f;
     double _fileCapacity = 0.0 ; //GB
     double _fileAvailable = 0.0; //GB
-    float video_delete_percentage = DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE;
+    int _nDays = 8;
     std::vector<std::regex> fileDeleteRegexs {std::regex(R"(([0-9]{6})-([0-9]{6}))"),
                                                std::regex("[0-9]{4}-[0-9]{2}-[0-9]{2}")
     };
