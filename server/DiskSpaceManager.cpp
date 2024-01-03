@@ -30,15 +30,18 @@ std::shared_ptr<DiskSpaceManager> DiskSpaceManager::GetCreate()
 bool DiskSpaceManager::StartService(std::string recordPath, CONTROL_MODE_E ctrl_mode)
 {
     _timer = nullptr;
-    float timerSec = 60*10; // 10分钟定时监测录制的文件
+    float timerSec = 60*1; // 1分钟定时监测录制的文件
     std::string path = recordPath;
     float threshold = _thresholdMB = getSystemDisk(path) * 1024 * DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE;
     InfoL << "配置的存储阈值: " << threshold/1024 << " GB [ " << DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE*100 << "% ]";
     _poller = toolkit::WorkThreadPool::Instance().getPoller();
     _timer = std::make_shared<toolkit::Timer>(timerSec, [this, path, threshold, ctrl_mode]() {
+        InfoL << "管理模式: " <<  ctrl_mode;
         if(ctrl_mode == THRESHOLD_CTRL){
-            _nDays = -1;
-            _deleteOldestFile(path);
+            if(getUsedDisSpace(path) >= threshold){
+                _nDays = -1;
+                _deleteOldestFile(path);
+            }
         }else if(ctrl_mode == DAYS_CTRL){
             if(getUsedDisSpace(path) >= threshold){
                 // 如果磁盘使用超过阈值，则保存的录制文件天数减 1, 但不能少于 5+1 天
@@ -166,7 +169,7 @@ void DiskSpaceManager::_deleteOldestFile(const std::string& path)
                     // 如果目录数量（已经存储了几天的数据）<= 8, 则不需要删除
                     //（这种情况是为了间隔多天开机运行的场景；当按阈值管理时，至少保存 7+1 天）
                     // if(_getFileNumInDirectory(streamDir.path())<=_nDays) continue;
-                    if(_getFileNumInDirectory(streamDir.path())<=8) continue;
+                    // if(_getFileNumInDirectory(streamDir.path())<=8) continue;
                     
                     // 找出最久远的目录
                     std::string oldest_directory;

@@ -15,7 +15,7 @@
 #include "Poller/Timer.h"
 
 // #define DEBUG_RECORD_MANAGER
-#define DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE  0.85f //默认固定开始清理的阈值，当硬盘容量在大于85%时启动清除
+#define DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE  0.90f //默认固定开始清理的阈值，当硬盘容量在大于85%时启动清除
 class DiskSpaceManager
 {
 public:
