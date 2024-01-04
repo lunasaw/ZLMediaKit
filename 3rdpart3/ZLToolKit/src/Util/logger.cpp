@@ -166,6 +166,16 @@ static inline const char *getFileName(const char *file) {
     return pos ? pos + 1 : file;
 }
 
+static inline const char *getFileNameDate(const char *file) {
+    auto pos = strchr(file, '.');
+#ifdef _WIN32
+    if(!pos){
+        pos = strrchr(file, '\\');
+    }
+#endif
+    return pos ? pos + 1 : file;
+}
+
 static inline const char *getFunctionName(const char *func) {
 #ifndef _WIN32
     return func;
@@ -174,6 +184,8 @@ static inline const char *getFunctionName(const char *func) {
     return pos ? pos + 1 : func;
 #endif
 }
+
+
 
 LogContext::LogContext(LogLevel level, const char *file, const char *function, int line, const char *module_name, const char *flag)
         : _level(level), _line(line), _file(getFileName(file)), _function(getFunctionName(function)),
@@ -389,7 +401,13 @@ void LogChannel::format(const Logger &logger, ostream &ost, const LogContextPtr 
     }
 
     // log content
-    ost << ctx->str();
+    LogContextPtr oss;
+    std::string str = ctx->str();
+    str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+    str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
+    ost << str;
+
+    // ost << ctx->str();
 
     if (enable_color) {
         // color console end
@@ -474,15 +492,21 @@ static const auto s_second_per_day = 24 * 60 * 60;
 static string getLogFilePath(const string &dir, time_t second, int32_t index) {
     auto tm = getLocalTime(second);
     char buf[64];
-    snprintf(buf, sizeof(buf), "%d-%02d-%02d_%02d.log", 1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday, index);
+    // snprintf(buf, sizeof(buf), "wd-zlmediakit.log.%d-%02d-%02d_%02d", 1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday, index);
+    snprintf(buf, sizeof(buf), "wd-zlmediakit.%d-%02d-%02d.log", 1900 + tm.tm_year, 1 + tm.tm_mon, tm.tm_mday);
     return dir + buf;
 }
 
 //根据日志文件名返回GMT UNIX时间戳
 static time_t getLogFileTime(const string &full_path) {
     auto name = getFileName(full_path.data());
+    auto date_log = getFileNameDate(name);
+    char date[11];
+    strncpy(date, date_log, 10); // 从 "." 的下一个字符开始复制 10 个字符到 date 数组中
+    date[10] = '\0'; // 字符串结尾符
+    // printf("date:%s\n", date);
     struct tm tm{0};
-    if (!strptime(name, "%Y-%m-%d", &tm)) {
+    if (!strptime(date, "%Y-%m-%d", &tm)) {
         return 0;
     }
     //此函数会把本地时间转换成GMT时间戳
@@ -501,30 +525,59 @@ FileChannel::FileChannel(const string &name, const string &dir, LogLevel level) 
     }
 
     //收集所有日志文件
+    // File::scanDir(_dir, [this](const string &path, bool isDir) -> bool {
+    //     if (!isDir && end_with(path, ".log")) {
+    //         _log_file_map.emplace(path);
+    //     }
+    //     return true;
+    // }, false);
+
     File::scanDir(_dir, [this](const string &path, bool isDir) -> bool {
-        if (!isDir && end_with(path, ".log")) {
+        // printf("path:%s\n", path.c_str());
+        auto name = getFileName(path.data());
+        if (!isDir && start_with(name, "wd-zlmediakit.")) {
             _log_file_map.emplace(path);
         }
         return true;
     }, false);
 
     //获取今天日志文件的最大index号
-    auto log_name_prefix = getTimeStr("%Y-%m-%d_");
+#if 0   // 不关心 index 号，每天只保存一个 log 文件
+    auto log_name_suffix = getTimeStr("%Y-%m-%d");
     for (auto it = _log_file_map.begin(); it != _log_file_map.end(); ++it) {
         auto name = getFileName(it->data());
+        // printf("log file name:%s\n", name);
         //筛选出今天所有的日志文件
-        if (start_with(name, log_name_prefix)) {
+        if (end_with(name, log_name_suffix)) {
             int tm_mday;  // day of the month - [1, 31]
             int tm_mon;   // months since January - [0, 11]
             int tm_year;  // years since 1900
             uint32_t index;
             //今天第几个文件
-            int count = sscanf(name, "%d-%02d-%02d_%d.log", &tm_year, &tm_mon, &tm_mday, &index);
+            int count = sscanf(name, "wd-zlmediakit.%d-%02d-%02d_%d.log", &tm_year, &tm_mon, &tm_mday, &index);
             if (count == 4) {
                 _index = index >= _index ? index : _index;
             }
         }
     }
+#endif
+    
+    // auto log_name_prefix = getTimeStr("%Y-%m-%d_");
+    // for (auto it = _log_file_map.begin(); it != _log_file_map.end(); ++it) {
+    //     auto name = getFileName(it->data());
+    //     //筛选出今天所有的日志文件
+    //     if (start_with(name, log_name_prefix)) {
+    //         int tm_mday;  // day of the month - [1, 31]
+    //         int tm_mon;   // months since January - [0, 11]
+    //         int tm_year;  // years since 1900
+    //         uint32_t index;
+    //         //今天第几个文件
+    //         int count = sscanf(name, "%d-%02d-%02d_%d.log", &tm_year, &tm_mon, &tm_mday, &index);
+    //         if (count == 4) {
+    //             _index = index >= _index ? index : _index;
+    //         }
+    //     }
+    // }
 }
 
 void FileChannel::write(const Logger &logger, const LogContextPtr &ctx) {
@@ -532,6 +585,7 @@ void FileChannel::write(const Logger &logger, const LogContextPtr &ctx) {
     time_t second = ctx->_tv.tv_sec;
     //这条日志所在第几天
     auto day = getDay(second);
+    // printf("day:%lu, _last_day:%ld\n", day, _last_day);
     if ((int64_t) day != _last_day) {
         if (_last_day != -1) {
             //重置日志index
@@ -543,7 +597,7 @@ void FileChannel::write(const Logger &logger, const LogContextPtr &ctx) {
         changeFile(second);
     } else {
         //检查该天日志是否需要重新分片
-        checkSize(second);
+        // checkSize(second);       //注释掉，每天只保存一个log文件 
     }
 
     //写日志
@@ -563,6 +617,7 @@ void FileChannel::clean() {
             break;
         }
         //这个文件距今超过了一定天数，则删除文件
+        // printf("1 delete file:%s\n", it->data());
         File::delete_file(it->data());
         //删除这条记录
         it = _log_file_map.erase(it);
@@ -576,6 +631,7 @@ void FileChannel::clean() {
             break;
         }
         //删除文件
+        // printf("2 delete file:%s\n", it->data());
         File::delete_file(it->data());
         //删除这条记录
         _log_file_map.erase(it);
@@ -594,10 +650,12 @@ void FileChannel::checkSize(time_t second) {
 
 void FileChannel::changeFile(time_t second) {
     auto log_file = getLogFilePath(_dir, second, _index++);
+    // printf("log_file:%s\n", log_file.c_str());
     //记录所有的日志文件，以便后续删除老的日志
     _log_file_map.emplace(log_file);
     //打开新的日志文件
     _can_write = setPath(log_file);
+    // printf("_can_write:%d\n", _can_write);
     if (!_can_write) {
         ErrorL << "Failed to open log file: " << _path;
     }

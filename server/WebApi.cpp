@@ -1874,6 +1874,7 @@ void installWebApi() {
         invoker(200, headerOut, val.toStyledString());
     });
 
+#if 0
     api_regist("/index/api/setStorageThreshold",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
         CHECK_ARGS("threshold")
@@ -1891,6 +1892,7 @@ void installWebApi() {
         }
         invoker(200, headerOut, val.toStyledString());
     });
+#endif
 
     api_regist("/index/api/getStorageSpace",[](API_ARGS_MAP_ASYNC){
         CHECK_SECRET();
@@ -1898,10 +1900,13 @@ void installWebApi() {
         std::string path = mINI::Instance()[mediakit::Protocol::kMP4SavePath];
         std::string appName = mINI::Instance()[mediakit::Record::kAppName];
 
+        DiskSpaceManager::DiskInfo diskInfo(path+"/"+appName);
+        float diskTotalCapacity = diskInfo._Capacity;
+        int diskUsedCapacity = diskInfo._UsedDiskCap;
         double videoStorageSpace = DiskSpaceManager::GetCreate()->GetStorageSpace(path+"/"+appName);
-        int threshold = DiskSpaceManager::GetCreate()->getDeleteVideoThreshold() *100  ;//百分比扩大100 倍
-        float diskTotalCapacity =  DiskSpaceManager::GetCreate()->getSystemDisk(path+"/"+appName)  * 1024;//MB
-        int diskUsedCapacity = DiskSpaceManager::GetCreate()->getUsedDisSpace(path+"/"+appName)  ;//MB
+        // float diskTotalCapacity =  DiskSpaceManager::GetCreate()->getSystemDisk(path+"/"+appName)  * 1024;//MB
+        // int diskUsedCapacity = DiskSpaceManager::GetCreate()->getUsedDisSpace(path+"/"+appName)  ;//MB
+        int threshold = DiskSpaceManager::GetCreate()->GetDeleteVideoThreshold() *100  ;//百分比扩大100 倍
         if(videoStorageSpace < 0 ||diskTotalCapacity <=0 || diskUsedCapacity <= 0 ){
             val["code"] = -1;
             val["msg"] = "failed";
