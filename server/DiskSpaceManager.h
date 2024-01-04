@@ -33,7 +33,7 @@ public:
     public:
         DiskInfo(std::string path){
             //获取路径上的容量
-#if 1
+#if 0
             struct statvfs vfs ;
             if(statvfs(path.c_str(), &vfs) == -1){
                 //查不到挂在的路径分区大小
@@ -93,7 +93,7 @@ public:
     float GetThreshold() { return _thresholdMB; }
     float GetDeleteVideoThreshold() { return DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE; }
     double GetStorageSpace(std::string path);
-    
+
 private:
     int _removeEmptyDirectory(const std::string& path);
     void _removeHiddenFiles(const std::string& path);

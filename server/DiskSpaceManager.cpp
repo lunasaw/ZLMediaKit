@@ -33,7 +33,7 @@ bool DiskSpaceManager::StartService(std::string recordPath, CONTROL_MODE_E ctrl_
     _poller = toolkit::WorkThreadPool::Instance().getPoller();
     _timer = std::make_shared<toolkit::Timer>(timerSec, [this, recordPath, ctrl_mode]() {
         DiskInfo diskInfo(recordPath);
-        InfoL << "管理模式: " <<  ctrl_mode << ", 硬盘实际使用率: " << diskInfo._UsageRate*100 << "%";
+        InfoL << "管理模式: " <<  ctrl_mode << ", 硬盘使用率: " << diskInfo._UsageRate*100 << "%";
         if(ctrl_mode == THRESHOLD_CTRL){
             if(diskInfo._UsageRate >= DISK_VIDEO_RECORD_THRESHOLD_PERCENTAGE){
                 _nDays = -1;
