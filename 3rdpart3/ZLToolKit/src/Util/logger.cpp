@@ -401,7 +401,13 @@ void LogChannel::format(const Logger &logger, ostream &ost, const LogContextPtr 
     }
 
     // log content
-    ost << ctx->str();
+    LogContextPtr oss;
+    std::string str = ctx->str();
+    str.erase(std::remove(str.begin(), str.end(), '\n'), str.end());
+    str.erase(std::remove(str.begin(), str.end(), '\r'), str.end());
+    ost << str;
+
+    // ost << ctx->str();
 
     if (enable_color) {
         // color console end
